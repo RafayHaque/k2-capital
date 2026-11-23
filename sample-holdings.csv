@@ -1,0 +1,6 @@
+ticker,name,sector,shares,buy_price,buy_date
+AAPL,Apple Inc.,Technology,10,172.50,2025-09-15
+MSFT,Microsoft Corp.,Technology,6,380.00,2025-10-02
+JPM,JPMorgan Chase,Financials,8,150.20,2025-09-15
+JNJ,Johnson & Johnson,Health Care,7,160.00,2025-11-10
+XOM,Exxon Mobil,Energy,12,104.00,2026-01-20

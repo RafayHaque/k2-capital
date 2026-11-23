@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>K2 Capital | Portfolio</title>
+  <meta name="description" content="K2 Capital: bridging the gap between accounting and finance at Queen's University. Live club portfolio.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="images/logo.jpg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <a class="brand" href="index.html"><img src="images/logo.jpg" alt="K2 Capital logo"><span class="brand-text">K2 <span>Capital</span></span></a>
+      <nav>
+        <a class="active" href="index.html">Portfolio</a>
+        <a href="about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="wrap">
+      <h1>Our Portfolio</h1>
+      <p>Every position the club holds, with our entry price, the current market price, and return since purchase.</p>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <div class="cards" id="summary">
+      <div class="card"><div class="label">Holdings market value</div><div class="value" id="s-value">&ndash;</div></div>
+      <div class="card"><div class="label">Holdings cost basis</div><div class="value" id="s-cost">&ndash;</div></div>
+      <div class="card"><div class="label">Unrealized gain / loss</div><div class="value" id="s-gain">&ndash;</div></div>
+      <div class="card"><div class="label">Unrealized ROI</div><div class="value" id="s-roi">&ndash;</div></div>
+    </div>
+    <div class="cards second" id="fund">
+      <div class="card"><div class="label">Realized gain / loss</div><div class="value" id="f-real">&ndash;</div></div>
+      <div class="card"><div class="label">Total gain / loss</div><div class="value" id="f-total">&ndash;</div></div>
+      <div class="card"><div class="label">Total ROI (all trades)</div><div class="value" id="f-roi">&ndash;</div></div>
+      <div class="card"><div class="label">Closed trades</div><div class="value" id="f-closed">&ndash;</div><div class="sub" id="f-win"></div></div>
+    </div>
+    <p class="note" id="fxnote"></p>
+
+    <div id="status"></div>
+
+    <section class="block">
+      <h2>Sector allocation</h2>
+      <div class="alloc-bar" id="alloc"></div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <section class="block">
+      <h2>Current holdings</h2>
+      <div class="controls">
+        <div id="chips"></div>
+        <div class="spacer"></div>
+        <label class="toggle"><input type="checkbox" id="group" checked> Group by sector</label>
+      </div>
+      <div class="table-wrap">
+        <table id="holdings-table">
+          <thead>
+            <tr>
+              <th data-k="ticker">Ticker</th>
+              <th data-k="sector">Sector</th>
+              <th data-k="shares">Shares</th>
+              <th data-k="avg">Avg price</th>
+              <th data-k="price">Current</th>
+              <th data-k="valueCad">Value (CAD)</th>
+              <th data-k="gainCad">Unrealized G/L</th>
+              <th data-k="roi">ROI</th>
+              <th data-k="buyDate">Bought</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="note" id="updated"></p>
+    </section>
+
+    <section class="block">
+      <h2>Recent sells</h2>
+      <div class="table-wrap">
+        <table id="sells-table">
+          <thead>
+            <tr>
+              <th>Sold</th>
+              <th>Ticker</th>
+              <th>Shares</th>
+              <th>Avg cost</th>
+              <th>Avg sell price</th>
+              <th>Realized G/L (CAD)</th>
+              <th>Return</th>
+            </tr>
+          </thead>
+          <tbody id="sellRows"></tbody>
+        </table>
+      </div>
+      <p class="note"><button class="linkbtn" id="moreSells" hidden>Show all sells</button></p>
+      <p class="note">Total ROI = (realized + unrealized gain) &divide; total cost of every purchase. Cost uses the average price method. All totals are in CAD. USD amounts are converted at today's exchange rate, not the rate on the trade date, so CAD figures can differ slightly from IBKR.</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      K2 Capital, Queen's University. For educational purposes only; nothing here is investment advice.
+      Prices may be delayed. K2 Capital is a student club and is not an official Queen's University publication.
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

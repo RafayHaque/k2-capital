@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>K2 Capital | About</title>
+  <meta name="description" content="About K2 Capital, the Queen's University club bridging accounting and finance.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="images/logo.jpg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <a class="brand" href="index.html"><img src="images/logo.jpg" alt="K2 Capital logo"><span class="brand-text">K2 <span>Capital</span></span></a>
+      <nav>
+        <a href="index.html">Portfolio</a>
+        <a class="active" href="about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="wrap">
+      <h1>About K2 Capital</h1>
+      <p>A student-run club at Queen's University bridging the gap between accounting and finance.</p>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section class="block two-col">
+      <div>
+        <h2>Our mission</h2>
+        <p>
+          Accounting and finance are often taught as separate worlds, but great investors read both fluently.
+          K2 Capital brings students from both sides together to analyze real companies: reading financial
+          statements, building valuation models, and putting those ideas to work in a live club portfolio.
+        </p>
+        <p><!-- TODO: add a sentence or two about how the club runs (weekly meetings, pitch process, who can join). --></p>
+        <div class="pillars">
+          <div class="card"><strong>Learn</strong><br><span class="name">Workshops linking financial statements to valuation.</span></div>
+          <div class="card"><strong>Analyze</strong><br><span class="name">Student-led stock pitches with accounting-driven research.</span></div>
+          <div class="card"><strong>Invest</strong><br><span class="name">A transparent, tracked portfolio you can follow here.</span></div>
+        </div>
+      </div>
+      <div>
+        <h2>Contact</h2>
+        <div class="card">
+          <p style="margin-top:0"><strong>Email</strong><br><a href="mailto:k2capital@example.com">k2capital@example.com</a></p>
+          <p><strong>Instagram</strong><br><a href="https://instagram.com/k2capital.official" rel="noopener">@k2capital.official</a></p>
+          <p><strong>All links</strong><br><a href="https://linktr.ee/k2capital.offical" rel="noopener">linktr.ee/k2capital.offical</a></p>
+          <p style="margin-bottom:0"><strong>Location</strong><br>Queen's University, Kingston, ON<br><span class="name">Est. February 2025</span></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>Meet the team</h2>
+      <div class="grid" id="team"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      K2 Capital, Queen's University. For educational purposes only; nothing here is investment advice.
+      K2 Capital is a student club and is not an official Queen's University publication.
+    </div>
+  </footer>
+
+  <script>
+    // Edit this list to update the team. Add "photo": "images/name.jpg" to show a headshot.
+    const TEAM = [
+      { name: "Kenny Li",           role: "Co-Founder",         bio: "PwC" },
+      { name: "Rafay Haque",        role: "Co-Founder",         bio: "KPMG" },
+      { name: "Chris Jin",          role: "Executive Director", bio: "PwC" },
+      { name: "Tristan Chevrette",  role: "Executive Director", bio: "KPMG" },
+      { name: "Julia Hamam",        role: "Executive Director", bio: "Deloitte" }
+      // Add the Accounting and Finance Associates here, same format.
+    ];
+
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    document.getElementById("team").innerHTML = TEAM.map((p) => {
+      const initials = p.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+      const avatar = p.photo
+        ? `<img class="avatar" src="${esc(p.photo)}" alt="${esc(p.name)}">`
+        : `<div class="avatar">${esc(initials)}</div>`;
+      return `<div class="card person">${avatar}<h3>${esc(p.name)}</h3><div class="role">${esc(p.role)}</div><p>${esc(p.bio)}</p></div>`;
+    }).join("");
+  </script>
+</body>
+</html>
