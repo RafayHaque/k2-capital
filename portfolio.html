@@ -48,6 +48,28 @@
       </div>
     </section>
 
+    <!-- Weekly summary -->
+    <section class="block" id="week-block">
+      <div class="section-head">
+        <h2>Weekly summary</h2>
+        <label class="toggle">Week ending <select id="week-select" class="select"></select></label>
+      </div>
+      <div class="cards flat" id="week-cards">
+        <div class="card"><div class="label">Week return</div><div class="value" id="w-ret">&ndash;</div><div class="sub" id="w-ret-sub"></div></div>
+        <div class="card"><div class="label">Week gain / loss</div><div class="value" id="w-gain">&ndash;</div><div class="sub" id="w-gain-sub"></div></div>
+        <div class="card"><div class="label">Trades</div><div class="value" id="w-trades">&ndash;</div><div class="sub" id="w-trades-sub"></div></div>
+        <div class="card"><div class="label">Realized gain / loss</div><div class="value" id="w-real">&ndash;</div><div class="sub" id="w-real-sub"></div></div>
+        <div class="card"><div class="label">Return since inception</div><div class="value" id="w-since">&ndash;</div><div class="sub" id="w-since-sub"></div></div>
+      </div>
+      <div class="table-wrap" id="week-trades-wrap">
+        <table id="week-table">
+          <thead><tr><th>Date</th><th>Side</th><th>Ticker</th><th>Shares</th><th>Price</th><th>Amount (CAD)</th></tr></thead>
+          <tbody id="weekRows"></tbody>
+        </table>
+      </div>
+      <p class="note" id="week-note"></p>
+    </section>
+
     <!-- Current holdings -->
     <section class="block">
       <h2>Current holdings</h2>

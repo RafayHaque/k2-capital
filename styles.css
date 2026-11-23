@@ -221,3 +221,14 @@ section.block.first { margin-top: 40px; }
 .hero h1 { line-height: 1.12; }
 .card .value { overflow-wrap: anywhere; }
 .chart svg [hidden] { display: none; }
+
+/* Weekly summary */
+.select { font: inherit; font-size: .9rem; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--text); margin-left: 6px; }
+.side { display: inline-block; font-size: .72rem; font-weight: 800; letter-spacing: .05em; padding: 2px 9px; border-radius: 999px; }
+.side.buy { background: #e3f1ea; color: var(--gain); }
+.side.sell { background: #f9e4e1; color: var(--loss); }
+#week-table { min-width: 640px; }
+#week-table th { cursor: default; }
+#week-table th, #week-table td { text-align: right; padding-left: 10px; padding-right: 10px; }
+#week-table th:nth-child(-n+3), #week-table td:nth-child(-n+3) { text-align: left; }
+.table-wrap[hidden] { display: none; }

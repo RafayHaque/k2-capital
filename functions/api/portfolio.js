@@ -174,6 +174,14 @@ export function buildPortfolio(transactions) {
   return { holdings, sells, invested, warnings };
 }
 
+
+// Every trade, newest first, for the weekly summary.
+export function tradesList(transactions) {
+  return transactions
+    .map((t) => ({ date: t.date, ticker: t.ticker, name: t.name, side: t.side, shares: t.shares, price: t.price, currency: t.currency, fees: t.fees }))
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.ticker.localeCompare(b.ticker)));
+}
+
 // ---------- Prices and FX ----------
 
 async function finnhubPrice(ticker, key) {
@@ -299,6 +307,8 @@ export const SAMPLE_TRANSACTIONS = [
   { date: "2026-03-12", ticker: "NVDA", name: "NVIDIA Corp.", sector: "Technology", side: "SELL", shares: 5, price: 175, currency: "USD", fees: 0 },
   { date: "2026-04-02", ticker: "SHOP.TO", name: "Shopify Inc.", sector: "Technology", side: "SELL", shares: 15, price: 118, currency: "CAD", fees: 0 },
   { date: "2026-05-15", ticker: "AAPL", name: "Apple Inc.", sector: "Technology", side: "SELL", shares: 4, price: 215, currency: "USD", fees: 0 },
+  { date: "2026-11-10", ticker: "MSFT", name: "Microsoft Corp.", sector: "Technology", side: "BUY", shares: 2, price: 410, currency: "USD", fees: 0 },
+  { date: "2026-11-12", ticker: "JPM", name: "JPMorgan Chase", sector: "Financials", side: "SELL", shares: 2, price: 208, currency: "USD", fees: 0 },
 ];
 export const SAMPLE_PRICES = { AAPL: 228.1, MSFT: 415.3, JPM: 211.4, JNJ: 152.6, XOM: 111.9, "RY.TO": 165.2 };
 
@@ -311,6 +321,7 @@ export function demoResponse() {
     fx: { USD: 1.4, CAD: 1, source: "sample rate" },
     holdings: p.holdings.map((h) => ({ ...h, price: SAMPLE_PRICES[h.ticker] ?? null })),
     sells: p.sells,
+    trades: tradesList(SAMPLE_TRANSACTIONS),
     performance: computePerformance(demoPerformanceRows()),
   };
 }
@@ -375,6 +386,7 @@ export async function onRequestGet(context) {
       fx: { USD: fx.rate, CAD: 1, date: fx.date, source: fx.source },
       holdings: p.holdings.map((h) => ({ ...h, price: prices[h.ticker] ?? null })),
       sells: p.sells,
+      trades: tradesList(parsed.transactions),
       performance,
     });
     context.waitUntil(cache.put(cacheKey, response.clone()));

@@ -101,6 +101,67 @@ function drawChart() {
   hit.addEventListener("pointerleave", () => { hx.hidden = hd.hidden = tip.hidden = true; });
 }
 
+
+// ---------- Weekly summary ----------
+
+// Weeks come from the Performance tab (one row per week). Without it, calendar weeks (Mon to Sun) are used.
+function weekPeriods() {
+  const p = state.perf;
+  if (p && p.points.length > 1) {
+    return p.points.slice(1).map((pt, i) => ({
+      start: p.points[i].date, end: pt.date, // trades with start < date <= end belong to this week
+      pct: pt.periodPct, gain: pt.nav - p.points[i].nav - pt.flow, flow: pt.flow, cum: pt.cum, nav: pt.nav,
+    })).reverse();
+  }
+  const out = [];
+  const d = new Date();
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // this Monday
+  for (let i = 0; i < 12; i++) {
+    const mon = new Date(d); mon.setDate(d.getDate() - i * 7);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    const prev = new Date(mon); prev.setDate(mon.getDate() - 1);
+    const iso = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
+    out.push({ start: iso(prev), end: iso(sun), pct: null, gain: null, flow: 0, cum: null, nav: null });
+  }
+  return out;
+}
+
+function renderWeekSelect() {
+  state.weeks = weekPeriods();
+  $("week-select").innerHTML = state.weeks.map((w, i) => `<option value="${i}">${fmtDate(w.end)}</option>`).join("");
+  renderWeek();
+}
+
+function renderWeek() {
+  const w = state.weeks[+$("week-select").value || 0];
+  if (!w) { $("week-block").hidden = true; return; }
+  const trades = (state.data.trades || []).filter((t) => t.date > w.start && t.date <= w.end);
+  const buys = trades.filter((t) => t.side === "BUY").length, sells = trades.filter((t) => t.side === "SELL").length;
+  const realized = state.sells.filter((s) => s.date > w.start && s.date <= w.end).reduce((a, s) => a + s.realizedCad, 0);
+
+  setValue("w-ret", pct(w.pct), cls(w.pct));
+  setText("w-ret-sub", w.pct == null ? "needs Performance tab" : "time-weighted");
+  setValue("w-gain", w.gain == null ? "–" : money(w.gain), cls(w.gain));
+  setText("w-gain-sub", w.flow ? `excludes ${money0(w.flow)} ${w.flow > 0 ? "deposit" : "withdrawal"}` : "");
+  setValue("w-trades", String(trades.length));
+  setText("w-trades-sub", `${buys} buy${buys === 1 ? "" : "s"} · ${sells} sell${sells === 1 ? "" : "s"}`);
+  setValue("w-real", sells ? money(realized) : "–", cls(sells ? realized : null));
+  setText("w-real-sub", sells ? `from ${sells} sell${sells === 1 ? "" : "s"}` : "no sells");
+  setValue("w-since", pct(w.cum), cls(w.cum));
+  setText("w-since-sub", w.nav ? "worth " + money0(w.nav) : "");
+
+  $("week-trades-wrap").hidden = !trades.length;
+  $("weekRows").innerHTML = trades.map((t) => `<tr>
+    <td class="muted-cell">${fmtDate(t.date)}</td>
+    <td><span class="side ${t.side === "BUY" ? "buy" : "sell"}">${t.side}</span></td>
+    <td><span class="ticker">${esc(t.ticker)}</span><div class="name">${esc(t.name)}</div></td>
+    <td>${t.shares.toLocaleString("en-CA", { maximumFractionDigits: 4 })}</td>
+    <td>${money(t.price, t.currency)}</td>
+    <td>${money(state.data.toCad(t.shares * t.price, t.currency))}</td>
+  </tr>`).join("");
+  $("week-note").textContent = trades.length ? "" : "No trades this week.";
+}
+
 // ---------- Current holdings ----------
 
 function renderHoldingsSummary() {
@@ -218,7 +279,7 @@ async function load() {
 
     $("fxnote").textContent = `Holdings are in CAD. 1 USD = ${data.rate("USD").toFixed(4)} CAD (${data.fx.source || "rate"}${data.fx.date ? ", " + data.fx.date : ""}).`;
     $("updated").textContent = data.demo ? "Sample prices." : "Prices last refreshed " + new Date(data.updated).toLocaleString("en-CA") + ". Quotes refresh about every 15 minutes and may be delayed.";
-    renderPerf(); renderHoldingsSummary(); renderAlloc(); renderChips(); renderRows(); renderSells();
+    renderPerf(); renderWeekSelect(); renderHoldingsSummary(); renderAlloc(); renderChips(); renderRows(); renderSells();
   } catch (e) {
     setStatus("Couldn't load the portfolio right now. Please try again shortly.", "error");
     console.error(e);
@@ -232,6 +293,7 @@ document.querySelectorAll("#holdings-table thead th").forEach((th) =>
     state.sortKey = k;
     renderRows();
   }));
+$("week-select").addEventListener("change", renderWeek);
 $("group").addEventListener("change", (e) => { state.group = e.target.checked; renderRows(); });
 $("moreSells").addEventListener("click", () => { state.allSells = !state.allSells; renderSells(); });
 document.querySelectorAll("#chart-modes .chip").forEach((b) => b.addEventListener("click", () => {

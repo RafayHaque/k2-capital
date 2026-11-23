@@ -10,3 +10,5 @@ date,ticker,name,sector,side,shares,price,currency,fees
 2026-03-12,NVDA,NVIDIA Corp.,Technology,SELL,5,175,USD,0
 2026-04-02,SHOP.TO,Shopify Inc.,Technology,SELL,15,118,CAD,0
 2026-05-15,AAPL,Apple Inc.,Technology,SELL,4,215,USD,0
+2026-11-10,MSFT,Microsoft Corp.,Technology,BUY,2,410,USD,0
+2026-11-12,JPM,JPMorgan Chase,Financials,SELL,2,208,USD,0
