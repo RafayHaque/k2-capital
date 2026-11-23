@@ -1,189 +1,127 @@
-// K2 Capital: portfolio page logic.
-// Data comes from /api/portfolio (see functions/api/portfolio.js).
-// Positions, average prices and realized gains are computed there; this file converts to CAD and renders.
+// K2 Capital: Portfolio page. Needs site.js, sample-data.js and k2.js loaded first.
 
+const { $, money, money0, pct, cls, esc, fmtDate, setValue, setText, totals } = K2;
 const PALETTE = ["#495a30", "#c9a227", "#8c2f39", "#2a7f9e", "#8e5ea2", "#d2691e", "#4b5563", "#9bb36b", "#c2185b", "#00897b"];
+const state = { data: null, holdings: [], sells: [], perf: null, sector: "All", group: true, sortKey: "valueCad", sortDir: -1, allSells: false, chartMode: "value" };
 
-// Sample data used when the page is opened straight from a file (no server) or
-// when no /api/portfolio function exists yet. Live data replaces this once deployed.
-const SAMPLE = {
-  "demo": true,
-  "warnings": [],
-  "fx": {
-    "USD": 1.4,
-    "CAD": 1,
-    "source": "sample rate"
-  },
-  "invested": {
-    "USD": 8174.6,
-    "CAD": 4710
-  },
-  "holdings": [
-    {
-      "ticker": "AAPL",
-      "name": "Apple Inc.",
-      "sector": "Technology",
-      "currency": "USD",
-      "shares": 6,
-      "avg": 172.5,
-      "buyDate": "2025-09-15",
-      "price": 228.1
-    },
-    {
-      "ticker": "JPM",
-      "name": "JPMorgan Chase",
-      "sector": "Financials",
-      "currency": "USD",
-      "shares": 8,
-      "avg": 150.2,
-      "buyDate": "2025-09-15",
-      "price": 211.4
-    },
-    {
-      "ticker": "MSFT",
-      "name": "Microsoft Corp.",
-      "sector": "Technology",
-      "currency": "USD",
-      "shares": 6,
-      "avg": 380,
-      "buyDate": "2025-10-02",
-      "price": 415.3
-    },
-    {
-      "ticker": "JNJ",
-      "name": "Johnson & Johnson",
-      "sector": "Health Care",
-      "currency": "USD",
-      "shares": 7,
-      "avg": 160,
-      "buyDate": "2025-11-10",
-      "price": 152.6
-    },
-    {
-      "ticker": "XOM",
-      "name": "Exxon Mobil",
-      "sector": "Energy",
-      "currency": "USD",
-      "shares": 12,
-      "avg": 104,
-      "buyDate": "2026-01-20",
-      "price": 111.9
-    },
-    {
-      "ticker": "RY.TO",
-      "name": "Royal Bank of Canada",
-      "sector": "Financials",
-      "currency": "CAD",
-      "shares": 20,
-      "avg": 138,
-      "buyDate": "2026-02-03",
-      "price": 165.2
-    }
-  ],
-  "sells": [
-    {
-      "date": "2026-05-15",
-      "ticker": "AAPL",
-      "name": "Apple Inc.",
-      "sector": "Technology",
-      "currency": "USD",
-      "shares": 4,
-      "avgCost": 172.5,
-      "sellPrice": 215,
-      "realized": 170,
-      "returnPct": 0.2463768115942029
-    },
-    {
-      "date": "2026-04-02",
-      "ticker": "SHOP.TO",
-      "name": "Shopify Inc.",
-      "sector": "Technology",
-      "currency": "CAD",
-      "shares": 15,
-      "avgCost": 130,
-      "sellPrice": 118,
-      "realized": -180,
-      "returnPct": -0.09230769230769231
-    },
-    {
-      "date": "2026-03-12",
-      "ticker": "NVDA",
-      "name": "NVIDIA Corp.",
-      "sector": "Technology",
-      "currency": "USD",
-      "shares": 5,
-      "avgCost": 120,
-      "sellPrice": 175,
-      "realized": 275,
-      "returnPct": 0.4583333333333333
-    }
-  ]
-};
-SAMPLE.updated = new Date().toISOString();
+// ---------- Fund performance ----------
 
-const state = { holdings: [], sells: [], fx: { CAD: 1, USD: 1.4 }, invested: {}, sector: "All", group: true, sortKey: "valueCad", sortDir: -1, allSells: false };
+function renderPerf() {
+  const p = state.perf;
+  $("perf-empty").hidden = !!p;
+  $("perf-block").hidden = !p;
+  if (!p) {
+    ["p-worth", "p-gain", "p-since", "p-ytd"].forEach((id) => setValue(id, "–", ""));
+    setText("p-worth-sub", "Performance tab not connected");
+    return;
+  }
+  setValue("p-worth", money(p.latest.nav));
+  setText("p-worth-sub", "as of " + fmtDate(p.latest.date) + (p.lastPeriod ? ` · ${pct(p.lastPeriod.pct)} last period` : ""));
+  setValue("p-gain", money(p.gain), cls(p.gain));
+  setText("p-gain-sub", "on " + money0(p.contributed) + " contributed");
+  setValue("p-since", pct(p.sinceInception), cls(p.sinceInception));
+  setValue("p-ytd", pct(p.ytd), cls(p.ytd));
+  setText("p-ytd-sub", new Date(p.latest.date + "T12:00:00").getFullYear() + " so far");
+  setText("perf-note", "Updated weekly from our brokerage statement. Dashed line shows money contributed to the fund.");
+  drawChart();
+}
 
-const $ = (id) => document.getElementById(id);
-const money = (n, cur = "CAD") => n == null || isNaN(n) ? "–" :
-  n.toLocaleString("en-CA", { style: "currency", currency: cur, maximumFractionDigits: 2 });
-const pct = (n) => n == null || isNaN(n) ? "–" : (n >= 0 ? "+" : "") + (n * 100).toFixed(2) + "%";
-const cls = (n) => n == null || isNaN(n) ? "" : n >= 0 ? "gain" : "loss";
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const rate = (cur) => state.fx[cur] ?? 1;
-const toCad = (n, cur) => (n == null ? null : n * rate(cur));
-const fmtDate = (d) => !d || d.startsWith("1970") ? "–" :
-  new Date(d + "T12:00:00").toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" });
+function niceStep(raw) {
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const f = raw / p;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
+}
 
-function enrichHolding(h) {
-  const cost = h.avg * h.shares;
-  const value = h.price != null ? h.price * h.shares : null;
-  const gain = value != null ? value - cost : null;
-  return {
-    ...h, cost, value, gain,
-    roi: value != null && cost ? gain / cost : null,
-    costCad: toCad(cost, h.currency),
-    valueCad: toCad(value, h.currency),
-    gainCad: toCad(gain, h.currency),
+function drawChart() {
+  const host = $("chart");
+  const pts = state.perf && state.perf.points;
+  if (!pts || !pts.length) { host.innerHTML = ""; return; }
+
+  const mode = state.chartMode;
+  const W = Math.max(host.clientWidth, 320), H = 320, m = { l: 58, r: 16, t: 14, b: 30 };
+  const t = pts.map((p) => new Date(p.date + "T12:00:00").getTime());
+  const main = pts.map((p) => (mode === "value" ? p.nav : p.cum * 100));
+  const extra = mode === "value" ? pts.map((p) => p.contributed) : [];
+  let lo = Math.min(...main, ...extra), hi = Math.max(...main, ...extra);
+  if (mode === "return") { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+  const pad = (hi - lo) * 0.08 || 1;
+  lo -= pad; hi += pad;
+  if (mode === "value" && lo < 0) lo = 0;
+
+  const x = (v) => m.l + ((v - t[0]) / ((t[t.length - 1] - t[0]) || 1)) * (W - m.l - m.r);
+  const y = (v) => H - m.b - ((v - lo) / (hi - lo)) * (H - m.t - m.b);
+  const step = niceStep((hi - lo) / 5);
+  const ticks = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) ticks.push(v);
+  const fmtY = (v) => mode === "value"
+    ? v.toLocaleString("en-CA", { style: "currency", currency: "CAD", notation: "compact", maximumFractionDigits: 1 })
+    : v.toFixed(0) + "%";
+
+  const line = main.map((v, i) => `${i ? "L" : "M"}${x(t[i]).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  const area = `${line}L${x(t[t.length - 1]).toFixed(1)},${y(lo).toFixed(1)}L${x(t[0]).toFixed(1)},${y(lo).toFixed(1)}Z`;
+  const contrib = extra.length ? "M" + extra.map((v, i) => `${x(t[i]).toFixed(1)},${y(v).toFixed(1)}`).join("L") : "";
+
+  const labelIdx = [0, 1, 2, 3, 4].map((k) => Math.round((k * (pts.length - 1)) / 4)).filter((v, i, a) => a.indexOf(v) === i);
+  const xl = labelIdx.map((i) => {
+    const d = new Date(t[i]);
+    const anchor = i === 0 ? "start" : i === pts.length - 1 ? "end" : "middle";
+    return `<text x="${x(t[i]).toFixed(1)}" y="${H - 8}" text-anchor="${anchor}" class="ax">${d.toLocaleDateString("en-CA", { month: "short", year: "numeric" })}</text>`;
+  }).join("");
+
+  host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Fund performance chart">
+      ${ticks.map((v) => `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="grid"/><text x="${m.l - 8}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" class="ax">${fmtY(v)}</text>`).join("")}
+      ${mode === "return" ? `<line x1="${m.l}" x2="${W - m.r}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="zero"/>` : ""}
+      <path d="${area}" class="area"/>
+      ${contrib ? `<path d="${contrib}" class="contrib"/>` : ""}
+      <path d="${line}" class="series"/>
+      ${xl}
+      <line id="hx" class="hx" y1="${m.t}" y2="${H - m.b}" x1="0" x2="0" hidden/>
+      <circle id="hd" class="hd" r="4.5" hidden/>
+      <rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent" id="hit"/>
+    </svg><div class="tip" id="tip" hidden></div>`;
+
+  const hit = $("hit"), hx = $("hx"), hd = $("hd"), tip = $("tip");
+  const show = (ev) => {
+    const box = host.getBoundingClientRect();
+    const px = (ev.clientX - box.left) * (W / box.width);
+    let best = 0;
+    t.forEach((v, i) => { if (Math.abs(x(v) - px) < Math.abs(x(t[best]) - px)) best = i; });
+    const p = pts[best], cx = x(t[best]), cy = y(main[best]);
+    hx.setAttribute("x1", cx); hx.setAttribute("x2", cx); hd.setAttribute("cx", cx); hd.setAttribute("cy", cy);
+    hx.hidden = hd.hidden = tip.hidden = false;
+    tip.innerHTML = `<strong>${fmtDate(p.date)}</strong><br>` + (mode === "value"
+      ? `Worth ${money(p.nav)}<br><span class="muted-cell">Contributed ${money(p.contributed)}</span>`
+      : `Return ${pct(p.cum)}<br><span class="muted-cell">Worth ${money(p.nav)}</span>`);
+    const left = Math.min(Math.max((cx / W) * box.width - 70, 4), box.width - 150);
+    tip.style.left = left + "px";
+    tip.style.top = Math.max((cy / H) * box.height - 70, 0) + "px";
   };
+  hit.addEventListener("pointermove", show);
+  hit.addEventListener("pointerdown", show);
+  hit.addEventListener("pointerleave", () => { hx.hidden = hd.hidden = tip.hidden = true; });
 }
 
-function enrichSell(s) {
-  return { ...s, realizedCad: toCad(s.realized, s.currency) };
-}
+// ---------- Current holdings ----------
 
-function totals(list) {
-  const priced = list.filter((h) => h.valueCad != null);
-  const value = priced.reduce((a, h) => a + h.valueCad, 0);
-  const cost = priced.reduce((a, h) => a + h.costCad, 0);
-  return { value, cost, gain: value - cost, roi: cost ? (value - cost) / cost : null };
-}
-
-function setText(id, text, c) {
-  $(id).textContent = text;
-  if (c !== undefined) $(id).className = "value " + c;
-}
-
-function renderSummary() {
+function renderHoldingsSummary() {
   const t = totals(state.holdings);
-  setText("s-value", money(t.value));
-  setText("s-cost", money(t.cost));
-  setText("s-gain", money(t.gain), cls(t.gain));
-  setText("s-roi", pct(t.roi), cls(t.roi));
+  setValue("s-value", money(t.value));
+  setValue("s-cost", money(t.cost));
+  setValue("s-gain", money(t.gain), cls(t.gain));
+  setValue("s-roi", pct(t.roi), cls(t.roi));
 
-  const realized = state.sells.reduce((a, s) => a + s.realizedCad, 0);
-  const total = realized + t.gain;
-  const investedCad = Object.entries(state.invested).reduce((a, [cur, amt]) => a + toCad(amt, cur), 0);
-  setText("f-real", money(realized), cls(realized));
-  setText("f-total", money(total), cls(total));
-  setText("f-roi", investedCad ? pct(total / investedCad) : "–", cls(investedCad ? total : null));
-  const wins = state.sells.filter((s) => s.realized > 0).length;
-  setText("f-closed", String(state.sells.length));
-  $("f-win").textContent = state.sells.length ? `${Math.round((wins / state.sells.length) * 100)}% profitable` : "";
+  const nav = state.perf ? state.perf.latest.nav : null;
+  if (nav && t.value) {
+    const lev = t.value / nav;
+    setValue("s-lev", lev.toFixed(2) + "x");
+    setText("s-lev-sub", lev > 1 ? `about ${money0(t.value - nav)} borrowed` : `about ${Math.round((1 - lev) * 100)}% cash`);
+  } else {
+    setValue("s-lev", "–");
+    setText("s-lev-sub", "needs Performance tab");
+  }
 }
 
-function sectorList() {
-  return [...new Set(state.holdings.map((h) => h.sector || "Other"))].sort();
-}
+const sectorList = () => [...new Set(state.holdings.map((h) => h.sector || "Other"))].sort();
 
 function renderAlloc() {
   const sectors = sectorList();
@@ -201,30 +139,23 @@ function renderAlloc() {
 }
 
 function renderChips() {
-  const items = ["All", ...sectorList()];
-  $("chips").innerHTML = items
-    .map((s) => `<button class="chip ${s === state.sector ? "on" : ""}" data-s="${esc(s)}">${esc(s)}</button>`)
-    .join(" ");
+  $("chips").innerHTML = ["All", ...sectorList()]
+    .map((s) => `<button class="chip ${s === state.sector ? "on" : ""}" data-s="${esc(s)}">${esc(s)}</button>`).join(" ");
   $("chips").querySelectorAll(".chip").forEach((b) =>
-    b.addEventListener("click", () => { state.sector = b.dataset.s; renderChips(); renderRows(); })
-  );
+    b.addEventListener("click", () => { state.sector = b.dataset.s; renderChips(); renderRows(); }));
 }
 
-const curTag = () => ""; // US$ already marks USD amounts; plain $ is CAD
-
-function rowHtml(h) {
-  return `<tr>
+const rowHtml = (h) => `<tr>
     <td><span class="ticker">${esc(h.ticker)}</span><div class="name">${esc(h.name)}</div></td>
     <td>${esc(h.sector || "Other")}</td>
     <td>${h.shares.toLocaleString("en-CA", { maximumFractionDigits: 4 })}</td>
-    <td>${money(h.avg, h.currency)}${curTag(h.currency)}</td>
-    <td>${money(h.price, h.currency)}${curTag(h.currency)}</td>
+    <td>${money(h.avg, h.currency)}</td>
+    <td>${money(h.price, h.currency)}</td>
     <td>${money(h.valueCad)}</td>
     <td class="${cls(h.gainCad)}">${money(h.gainCad)}</td>
     <td class="${cls(h.roi)}"><strong>${pct(h.roi)}</strong></td>
     <td class="muted-cell">${fmtDate(h.buyDate)}</td>
   </tr>`;
-}
 
 function renderRows() {
   const list = state.holdings.filter((h) => state.sector === "All" || (h.sector || "Other") === state.sector);
@@ -232,10 +163,8 @@ function renderRows() {
   const val = (h) => (h[k] == null ? -Infinity : h[k]);
   const cmp = (a, b) => (typeof a[k] === "string" ? a[k].localeCompare(b[k]) * d : (val(a) - val(b)) * d);
   let html = "";
-
   if (state.group) {
-    const sectors = [...new Set(list.map((h) => h.sector || "Other"))].sort();
-    sectors.forEach((s) => {
+    [...new Set(list.map((h) => h.sector || "Other"))].sort().forEach((s) => {
       const items = list.filter((h) => (h.sector || "Other") === s).sort(cmp);
       const t = totals(items);
       html += `<tr class="group"><td colspan="5">${esc(s)} (${items.length})</td>
@@ -250,14 +179,22 @@ function renderRows() {
   $("rows").innerHTML = html || `<tr><td colspan="9" style="text-align:center;color:#6b7587">No holdings to show yet.</td></tr>`;
 }
 
+// ---------- Sells ----------
+
 function renderSells() {
+  const realized = state.sells.reduce((a, s) => a + s.realizedCad, 0);
+  const wins = state.sells.filter((s) => s.realized > 0).length;
+  setValue("r-real", state.sells.length ? money(realized) : "–", cls(state.sells.length ? realized : null));
+  setValue("r-count", String(state.sells.length));
+  setValue("r-win", state.sells.length ? Math.round((wins / state.sells.length) * 100) + "%" : "–");
+
   const shown = state.allSells ? state.sells : state.sells.slice(0, 10);
   $("sellRows").innerHTML = shown.map((s) => `<tr>
     <td class="muted-cell">${fmtDate(s.date)}</td>
     <td><span class="ticker">${esc(s.ticker)}</span><div class="name">${esc(s.name)}</div></td>
     <td>${s.shares.toLocaleString("en-CA", { maximumFractionDigits: 4 })}</td>
-    <td>${money(s.avgCost, s.currency)}${curTag(s.currency)}</td>
-    <td>${money(s.sellPrice, s.currency)}${curTag(s.currency)}</td>
+    <td>${money(s.avgCost, s.currency)}</td>
+    <td>${money(s.sellPrice, s.currency)}</td>
     <td class="${cls(s.realizedCad)}">${money(s.realizedCad)}</td>
     <td class="${cls(s.returnPct)}"><strong>${pct(s.returnPct)}</strong></td>
   </tr>`).join("") || `<tr><td colspan="7" style="text-align:center;color:#6b7587">No sells recorded yet.</td></tr>`;
@@ -266,35 +203,22 @@ function renderSells() {
   more.textContent = state.allSells ? "Show fewer" : `Show all ${state.sells.length} sells`;
 }
 
+// ---------- Load ----------
+
 function setStatus(msg, kind) {
   $("status").innerHTML = msg ? `<div class="banner ${kind || ""}">${msg}</div>` : "";
 }
 
 async function load() {
   try {
-    let data;
-    try {
-      if (location.protocol === "file:") throw new Error("no server");
-      const res = await fetch("/api/portfolio");
-      if (res.status === 404) throw new Error("no function");
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      data = await res.json();
-    } catch (e) {
-      // Not deployed yet (or opened as a local file): fall back to sample data.
-      if (location.protocol === "file:" || String(e.message) === "no function") data = SAMPLE;
-      else throw e;
-    }
-    state.fx = data.fx || { CAD: 1, USD: 1.4 };
-    state.invested = data.invested || {};
-    state.holdings = data.holdings.map(enrichHolding);
-    state.sells = (data.sells || []).map(enrichSell);
-
+    const data = await K2.load();
+    Object.assign(state, { data, holdings: data.holdings, sells: data.sells, perf: data.performance || null });
     if (data.demo) setStatus("Showing sample data. Connect your Google Sheet and price API key to go live (see README).");
     else if (data.warnings && data.warnings.length) setStatus("Heads up: " + esc(data.warnings.join(" · ")));
 
-    $("fxnote").textContent = `All totals in CAD. 1 USD = ${rate("USD").toFixed(4)} CAD (${state.fx.source || "rate"}${state.fx.date ? ", " + state.fx.date : ""}).`;
-    $("updated").textContent = (data.demo ? "Sample prices. " : "Prices last refreshed " + new Date(data.updated).toLocaleString("en-CA") + ". Quotes refresh about every 15 minutes and may be delayed.");
-    renderSummary(); renderAlloc(); renderChips(); renderRows(); renderSells();
+    $("fxnote").textContent = `Holdings are in CAD. 1 USD = ${data.rate("USD").toFixed(4)} CAD (${data.fx.source || "rate"}${data.fx.date ? ", " + data.fx.date : ""}).`;
+    $("updated").textContent = data.demo ? "Sample prices." : "Prices last refreshed " + new Date(data.updated).toLocaleString("en-CA") + ". Quotes refresh about every 15 minutes and may be delayed.";
+    renderPerf(); renderHoldingsSummary(); renderAlloc(); renderChips(); renderRows(); renderSells();
   } catch (e) {
     setStatus("Couldn't load the portfolio right now. Please try again shortly.", "error");
     console.error(e);
@@ -307,9 +231,15 @@ document.querySelectorAll("#holdings-table thead th").forEach((th) =>
     state.sortDir = state.sortKey === k ? -state.sortDir : (k === "ticker" || k === "sector" ? 1 : -1);
     state.sortKey = k;
     renderRows();
-  })
-);
+  }));
 $("group").addEventListener("change", (e) => { state.group = e.target.checked; renderRows(); });
 $("moreSells").addEventListener("click", () => { state.allSells = !state.allSells; renderSells(); });
+document.querySelectorAll("#chart-modes .chip").forEach((b) => b.addEventListener("click", () => {
+  state.chartMode = b.dataset.mode;
+  document.querySelectorAll("#chart-modes .chip").forEach((c) => c.classList.toggle("on", c === b));
+  drawChart();
+}));
+let resizeTimer;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawChart, 120); });
 
 load();

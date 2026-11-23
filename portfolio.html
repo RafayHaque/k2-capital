@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>K2 Capital | Portfolio</title>
+  <meta name="description" content="K2 Capital: bridging the gap between accounting and finance at Queen's University. Live club portfolio.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="images/logo.jpg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site" id="site-header"></header>
+
+  <div class="hero">
+    <div class="wrap">
+      <h1>Our Portfolio</h1>
+      <p>How the whole fund has performed since inception, and every position we hold today with our entry price, the current market price and return.</p>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <!-- Whole fund -->
+    <div class="cards" id="perf-cards">
+      <div class="card"><div class="label">Portfolio worth</div><div class="value" id="p-worth">&ndash;</div><div class="sub" id="p-worth-sub"></div></div>
+      <div class="card"><div class="label">Total gain / loss</div><div class="value" id="p-gain">&ndash;</div><div class="sub" id="p-gain-sub"></div></div>
+      <div class="card"><div class="label">Return since inception</div><div class="value" id="p-since">&ndash;</div><div class="sub">time-weighted</div></div>
+      <div class="card"><div class="label">Year to date</div><div class="value" id="p-ytd">&ndash;</div><div class="sub" id="p-ytd-sub"></div></div>
+    </div>
+
+    <div id="status"></div>
+
+    <section class="block">
+      <h2>Fund performance</h2>
+      <div id="perf-empty" class="empty" hidden>
+        Fund performance appears here once the Performance tab is connected (portfolio worth by week and any deposits).
+      </div>
+      <div id="perf-block">
+        <div class="controls">
+          <div id="chart-modes">
+            <button class="chip on" data-mode="value">Portfolio worth</button>
+            <button class="chip" data-mode="return">Return %</button>
+          </div>
+        </div>
+        <div class="chart-card"><div id="chart" class="chart"></div></div>
+        <p class="note" id="perf-note"></p>
+      </div>
+    </section>
+
+    <!-- Current holdings -->
+    <section class="block">
+      <h2>Current holdings</h2>
+      <div class="cards flat" id="hold-cards">
+        <div class="card"><div class="label">Market value</div><div class="value" id="s-value">&ndash;</div></div>
+        <div class="card"><div class="label">Holdings cost basis</div><div class="value" id="s-cost">&ndash;</div></div>
+        <div class="card"><div class="label">Unrealized gain / loss</div><div class="value" id="s-gain">&ndash;</div></div>
+        <div class="card"><div class="label">Unrealized ROI</div><div class="value" id="s-roi">&ndash;</div></div>
+        <div class="card"><div class="label">Leverage</div><div class="value" id="s-lev">&ndash;</div><div class="sub" id="s-lev-sub"></div></div>
+      </div>
+      <p class="note" id="fxnote"></p>
+
+      <h3 class="subhead">Sector allocation</h3>
+      <div class="alloc-bar" id="alloc"></div>
+      <div class="legend" id="legend"></div>
+
+      <div class="controls" style="margin-top:22px">
+        <div id="chips"></div>
+        <div class="spacer"></div>
+        <label class="toggle"><input type="checkbox" id="group" checked> Group by sector</label>
+      </div>
+      <div class="table-wrap">
+        <table id="holdings-table">
+          <thead>
+            <tr>
+              <th data-k="ticker">Ticker</th>
+              <th data-k="sector">Sector</th>
+              <th data-k="shares">Shares</th>
+              <th data-k="avg">Avg price</th>
+              <th data-k="price">Current</th>
+              <th data-k="valueCad">Value (CAD)</th>
+              <th data-k="gainCad">Unrealized G/L</th>
+              <th data-k="roi">ROI</th>
+              <th data-k="buyDate">Bought</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="note" id="updated"></p>
+    </section>
+
+    <!-- Sells -->
+    <section class="block">
+      <h2>Recent sells</h2>
+      <div class="cards flat three" id="sell-cards">
+        <div class="card"><div class="label">Realized gain / loss</div><div class="value" id="r-real">&ndash;</div></div>
+        <div class="card"><div class="label">Closed trades</div><div class="value" id="r-count">&ndash;</div></div>
+        <div class="card"><div class="label">Profitable trades</div><div class="value" id="r-win">&ndash;</div></div>
+      </div>
+      <div class="table-wrap">
+        <table id="sells-table">
+          <thead>
+            <tr>
+              <th>Sold</th>
+              <th>Ticker</th>
+              <th>Shares</th>
+              <th>Avg cost</th>
+              <th>Avg sell price</th>
+              <th>Realized G/L (CAD)</th>
+              <th>Return</th>
+            </tr>
+          </thead>
+          <tbody id="sellRows"></tbody>
+        </table>
+      </div>
+      <p class="note"><button class="linkbtn" id="moreSells" hidden>Show all sells</button></p>
+      <p class="note">
+        Portfolio worth, total gain and returns come from our brokerage account value and include cash, leverage and every trade;
+        returns are time-weighted so new deposits don't count as gains. Holdings figures use the average cost method and are in CAD,
+        with USD converted at today's exchange rate. Leverage = market value of holdings &divide; portfolio worth.
+      </p>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script src="site.js"></script>
+  <script src="sample-data.js"></script>
+  <script src="k2.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>K2 Capital | Events</title>
+  <meta name="description" content="K2 Capital events: case competitions, public portfolio meetings and stock pitches at Queen's University.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="images/logo.jpg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site" id="site-header"></header>
+
+  <div class="hero">
+    <div class="wrap">
+      <h1>Events</h1>
+      <p>Case competitions, public portfolio meetings and stock pitches. Everyone is welcome at our public events.</p>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section class="block first">
+      <div class="controls">
+        <div id="event-chips"></div>
+      </div>
+      <h2>Upcoming</h2>
+      <div class="events-list" id="upcoming"></div>
+    </section>
+
+    <section class="block" id="calendar-block" hidden>
+      <h2>Calendar</h2>
+      <div class="chart-card"><iframe id="calendar" title="K2 Capital calendar" loading="lazy" class="calendar"></iframe></div>
+    </section>
+
+    <section class="block">
+      <h2>Past events</h2>
+      <div class="events-list" id="past"></div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script src="site.js"></script>
+  <script src="events-data.js"></script>
+  <script src="events-ui.js"></script>
+  <script>
+    // To show a Google Calendar: in Google Calendar open the club calendar's settings, make it public,
+    // copy the "Embed code" src link and paste it between the quotes. Leave blank to hide the calendar.
+    const CALENDAR_EMBED = "";
+
+    let filter = "all";
+    const $ = (id) => document.getElementById(id);
+    function render() {
+      const type = filter === "all" ? null : filter;
+      renderEventCards($("upcoming"), upcomingEvents(0, type), "Nothing scheduled here yet. Follow our Instagram for updates.");
+      const past = EVENTS.filter((e) => e.date < todayIso() && (!type || e.type === type)).sort((a, b) => (a.date < b.date ? 1 : -1));
+      renderEventCards($("past"), past, "No past events yet.");
+    }
+    $("event-chips").innerHTML = [["all", "All"], ...Object.entries(EVENT_TYPES)]
+      .map(([k, v]) => `<button class="chip ${k === "all" ? "on" : ""}" data-t="${k}">${v}</button>`).join(" ");
+    $("event-chips").querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => {
+      filter = b.dataset.t;
+      $("event-chips").querySelectorAll(".chip").forEach((c) => c.classList.toggle("on", c === b));
+      render();
+    }));
+    if (CALENDAR_EMBED) { $("calendar").src = CALENDAR_EMBED; $("calendar-block").hidden = false; }
+    render();
+  </script>
+</body>
+</html>

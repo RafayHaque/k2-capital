@@ -78,6 +78,31 @@ Optional variable: `USDCAD_RATE` to fix the exchange rate instead of using the a
 
 How numbers are calculated: average cost method; USD converted to CAD at today's rate; Total ROI = (realized + unrealized) divided by the cost of every purchase.
 
+
+## Performance tab (portfolio worth, returns, graph, leverage)
+
+A second tab, `Performance`, powers the fund-level boxes, the graph and the Leverage box. Add one row per week (or any regular interval) from your IBKR statement:
+
+`date, portfolio_value, net_deposits`
+
+- `portfolio_value`: total account value in CAD (IBKR "Net Liquidation Value"), so it already includes cash, margin and everything else
+- `net_deposits`: money added (+) or withdrawn (-) since the previous row, in CAD. Leave 0 if none. The first row is your starting balance and its deposit is ignored.
+- Returns are time-weighted: each period's return removes that row's deposit, so adding money never looks like a gain.
+- Year to date uses the last row on or before Dec 31 as its starting point.
+
+Setup: add the tab (see `sample-performance.csv`), publish it as CSV (File > Share > Publish to web, pick the tab), and add the Cloudflare variable `PERFORMANCE_CSV_URL`. Then Retry deployment once.
+
+Leverage = market value of current holdings divided by the latest portfolio worth, so keep the Performance tab current.
+
+## Editing the other pages
+
+All edited on GitHub (open the file, pencil icon, Commit changes):
+- `site.js`: contact details (email, LinkedIn, Instagram) and the menu. Change once, every page updates.
+- `events-data.js`: the events list for the Home and Events pages. Delete the entries marked `sample: true`.
+- `about.html`: the `TEAM` list (intro, LinkedIn, photo for each person) and the `PHOTOS` list near the top of the script.
+- `education.html`: the TILES framework and the `RESOURCES` list near the top of the script.
+- Images: upload team photos to `images/team/` and club photos to `images/club/`.
+
 ## Good next steps
 - Currency column (CAD/USD) and converting to a single currency
 - Pull sector automatically instead of typing it in the sheet

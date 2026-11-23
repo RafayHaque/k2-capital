@@ -11,15 +11,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="site">
-    <div class="wrap">
-      <a class="brand" href="index.html"><img src="images/logo.jpg" alt="K2 Capital logo"><span class="brand-text">K2 <span>Capital</span></span></a>
-      <nav>
-        <a href="index.html">Portfolio</a>
-        <a class="active" href="about.html">About</a>
-      </nav>
-    </div>
-  </header>
+  <header class="site" id="site-header"></header>
 
   <div class="hero">
     <div class="wrap">
@@ -29,7 +21,7 @@
   </div>
 
   <main class="wrap">
-    <section class="block two-col">
+    <section class="block two-col first">
       <div>
         <h2>Our mission</h2>
         <p>
@@ -37,7 +29,7 @@
           K2 Capital brings students from both sides together to analyze real companies: reading financial
           statements, building valuation models, and putting those ideas to work in a live club portfolio.
         </p>
-        <p><!-- TODO: add a sentence or two about how the club runs (weekly meetings, pitch process, who can join). --></p>
+        <!-- TODO: add a sentence or two about how the club runs (weekly meetings, pitch process, who can join). -->
         <div class="pillars">
           <div class="card"><strong>Learn</strong><br><span class="name">Workshops linking financial statements to valuation.</span></div>
           <div class="card"><strong>Analyze</strong><br><span class="name">Student-led stock pitches with accounting-driven research.</span></div>
@@ -46,47 +38,83 @@
       </div>
       <div>
         <h2>Contact</h2>
-        <div class="card">
-          <p style="margin-top:0"><strong>Email</strong><br><a href="mailto:k2capital@example.com">k2capital@example.com</a></p>
-          <p><strong>Instagram</strong><br><a href="https://instagram.com/k2capital.official" rel="noopener">@k2capital.official</a></p>
-          <p><strong>All links</strong><br><a href="https://linktr.ee/k2capital.offical" rel="noopener">linktr.ee/k2capital.offical</a></p>
-          <p style="margin-bottom:0"><strong>Location</strong><br>Queen's University, Kingston, ON<br><span class="name">Est. February 2025</span></p>
-        </div>
+        <div data-contact></div>
       </div>
     </section>
 
     <section class="block">
       <h2>Meet the team</h2>
+      <p class="note" style="margin-top:-6px">Click a card to read a short intro.</p>
       <div class="grid" id="team"></div>
+    </section>
+
+    <section class="block">
+      <h2>Club photos</h2>
+      <div class="gallery" id="gallery"></div>
     </section>
   </main>
 
-  <footer>
-    <div class="wrap">
-      K2 Capital, Queen's University. For educational purposes only; nothing here is investment advice.
-      K2 Capital is a student club and is not an official Queen's University publication.
-    </div>
-  </footer>
+  <footer id="site-footer"></footer>
 
+  <script src="site.js"></script>
   <script>
-    // Edit this list to update the team. Add "photo": "images/name.jpg" to show a headshot.
+    // ---- Edit this section to update the page (on GitHub: open this file, click the pencil icon) ----
+
+    // photo: "images/team/name.jpg" (upload the picture to the images/team folder). linkedin: personal profile URL.
+    // intro shows on the back of the card. Leave a field as "" to hide it.
     const TEAM = [
-      { name: "Kenny Li",           role: "Co-Founder",         bio: "PwC" },
-      { name: "Rafay Haque",        role: "Co-Founder",         bio: "KPMG" },
-      { name: "Chris Jin",          role: "Executive Director", bio: "PwC" },
-      { name: "Tristan Chevrette",  role: "Executive Director", bio: "KPMG" },
-      { name: "Julia Hamam",        role: "Executive Director", bio: "Deloitte" }
+      { name: "Kenny Li",          role: "Co-Founder",         bio: "PwC",      intro: "", linkedin: "", photo: "" },
+      { name: "Rafay Haque",       role: "Co-Founder",         bio: "KPMG",     intro: "", linkedin: "", photo: "" },
+      { name: "Chris Jin",         role: "Executive Director", bio: "PwC",      intro: "", linkedin: "", photo: "" },
+      { name: "Tristan Chevrette", role: "Executive Director", bio: "KPMG",     intro: "", linkedin: "", photo: "" },
+      { name: "Julia Hamam",       role: "Executive Director", bio: "Deloitte", intro: "", linkedin: "", photo: "" },
       // Add the Accounting and Finance Associates here, same format.
     ];
 
+    // Upload pictures to the images/club folder and list them here, for example "images/club/social-1.jpg".
+    // caption is optional.
+    const PHOTOS = [
+      // { src: "images/club/social-1.jpg", caption: "Fall social" },
+    ];
+
+    // ---- End of editable section ----
+
     const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    document.getElementById("team").innerHTML = TEAM.map((p) => {
+    const $ = (id) => document.getElementById(id);
+
+    $("team").innerHTML = TEAM.map((p, i) => {
       const initials = p.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
       const avatar = p.photo
         ? `<img class="avatar" src="${esc(p.photo)}" alt="${esc(p.name)}">`
-        : `<div class="avatar">${esc(initials)}</div>`;
-      return `<div class="card person">${avatar}<h3>${esc(p.name)}</h3><div class="role">${esc(p.role)}</div><p>${esc(p.bio)}</p></div>`;
+        : `<div class="avatar" aria-hidden="true">${esc(initials)}</div>`;
+      const intro = p.intro ? esc(p.intro) : "Intro coming soon.";
+      const li = p.linkedin ? `<a class="btn small" href="${esc(p.linkedin)}" rel="noopener" target="_blank">LinkedIn</a>` : "";
+      return `<div class="flip">
+        <div class="flip-inner">
+          <div class="face front card person">${avatar}<h3>${esc(p.name)}</h3><div class="role">${esc(p.role)}</div><p>${esc(p.bio)}</p>
+            <button type="button" class="linkbtn flip-btn" aria-label="Read intro for ${esc(p.name)}">Read intro</button></div>
+          <div class="face back card person" aria-hidden="true"><h3>${esc(p.name)}</h3><div class="role">${esc(p.role)}</div>
+            <p class="intro">${intro}</p>
+            <div class="back-links">${li}<button type="button" class="linkbtn flip-btn" tabindex="-1">Back</button></div></div>
+        </div>
+      </div>`;
     }).join("");
+    document.querySelectorAll(".flip").forEach((card) => {
+      const toggle = (ev) => {
+        if (ev.target.closest("a")) return; // let the LinkedIn link work
+        const on = card.classList.toggle("flipped");
+        card.querySelector(".front").setAttribute("aria-hidden", on);
+        card.querySelector(".back").setAttribute("aria-hidden", !on);
+        card.querySelectorAll(".front .flip-btn").forEach((b) => (b.tabIndex = on ? -1 : 0));
+        card.querySelectorAll(".back .flip-btn, .back a").forEach((b) => (b.tabIndex = on ? 0 : -1));
+      };
+      card.addEventListener("click", toggle);
+      card.querySelectorAll(".back a").forEach((x) => (x.tabIndex = -1));
+    });
+
+    $("gallery").innerHTML = PHOTOS.length
+      ? PHOTOS.map((p) => `<figure><img src="${esc(p.src)}" alt="${esc(p.caption || "K2 Capital club photo")}" loading="lazy">${p.caption ? `<figcaption>${esc(p.caption)}</figcaption>` : ""}</figure>`).join("")
+      : `<div class="empty">Club photos are coming soon.</div>`;
   </script>
 </body>
 </html>

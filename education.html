@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>K2 Capital | Education</title>
+  <meta name="description" content="K2 Capital education: our TILES stock analysis framework and learning resources linking accounting and finance.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="images/logo.jpg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site" id="site-header"></header>
+
+  <div class="hero">
+    <div class="wrap">
+      <h1>Education</h1>
+      <p>How we analyze a company, and resources for learning to read the accounting and the finance together.</p>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section class="block first">
+      <h2>The TILES framework</h2>
+      <p class="lead" id="tiles-intro"></p>
+      <div class="tiles" id="tiles"></div>
+    </section>
+
+    <section class="block">
+      <h2>Resources</h2>
+      <div class="controls"><div id="res-chips"></div></div>
+      <div class="resources" id="resources"></div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <script src="site.js"></script>
+  <script>
+    // ---- Edit this section to update the page (on GitHub: open this file, click the pencil icon) ----
+
+    const TILES_INTRO = "Every pitch at K2 Capital follows the TILES framework, so ideas are comparable and the reasoning is easy to check.";
+
+    // TODO: replace the placeholder letters, titles and descriptions with the real TILES framework.
+    const TILES = [
+      { letter: "T", title: "Add what T stands for", body: "Describe this step in one or two sentences." },
+      { letter: "I", title: "Add what I stands for", body: "Describe this step in one or two sentences." },
+      { letter: "L", title: "Add what L stands for", body: "Describe this step in one or two sentences." },
+      { letter: "E", title: "Add what E stands for", body: "Describe this step in one or two sentences." },
+      { letter: "S", title: "Add what S stands for", body: "Describe this step in one or two sentences." },
+    ];
+
+    // category: "Accounting", "Finance" or "Valuation" (add your own). link is optional.
+    const RESOURCES = [
+      // { category: "Accounting", title: "Reading a 10-K", description: "How to find the numbers that matter.", link: "https://..." },
+    ];
+
+    // ---- End of editable section ----
+
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const $ = (id) => document.getElementById(id);
+
+    $("tiles-intro").textContent = TILES_INTRO;
+    $("tiles").innerHTML = TILES.map((t) => `<div class="tile"><div class="letter">${esc(t.letter)}</div><h3>${esc(t.title)}</h3><p>${esc(t.body)}</p></div>`).join("");
+
+    let cat = "All";
+    function renderResources() {
+      const cats = ["All", ...new Set(RESOURCES.map((r) => r.category).filter(Boolean))];
+      $("res-chips").innerHTML = RESOURCES.length ? cats.map((c) => `<button class="chip ${c === cat ? "on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join(" ") : "";
+      $("res-chips").querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => { cat = b.dataset.c; renderResources(); }));
+      const list = RESOURCES.filter((r) => cat === "All" || r.category === cat);
+      $("resources").innerHTML = list.length ? list.map((r) => `<div class="card resource">
+          <div class="tags"><span class="tag">${esc(r.category || "Resource")}</span></div>
+          <h3>${esc(r.title)}</h3><p>${esc(r.description)}</p>
+          ${r.link ? `<a href="${esc(r.link)}" rel="noopener">Open &rarr;</a>` : ""}</div>`).join("")
+        : `<div class="empty">Learning resources are coming soon.</div>`;
+    }
+    renderResources();
+  </script>
+</body>
+</html>

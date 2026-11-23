@@ -3,112 +3,87 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>K2 Capital | Portfolio</title>
-  <meta name="description" content="K2 Capital: bridging the gap between accounting and finance at Queen's University. Live club portfolio.">
+  <title>K2 Capital | Queen's University</title>
+  <meta name="description" content="K2 Capital: a student-run club at Queen's University bridging the gap between accounting and finance.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" href="images/logo.jpg">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="site">
-    <div class="wrap">
-      <a class="brand" href="index.html"><img src="images/logo.jpg" alt="K2 Capital logo"><span class="brand-text">K2 <span>Capital</span></span></a>
-      <nav>
-        <a class="active" href="index.html">Portfolio</a>
-        <a href="about.html">About</a>
-      </nav>
-    </div>
-  </header>
+  <header class="site" id="site-header"></header>
 
-  <div class="hero">
+  <div class="hero home-hero">
     <div class="wrap">
-      <h1>Our Portfolio</h1>
-      <p>Every position the club holds, with our entry price, the current market price, and return since purchase.</p>
+      <h1>Bridging the gap between accounting and finance.</h1>
+      <p>K2 Capital is a student-run investment club at Queen's University. We read the financial statements, build the valuations and manage a live portfolio you can follow here.</p>
+      <div class="hero-actions">
+        <a class="btn" href="portfolio.html">View the portfolio</a>
+        <a class="btn ghost" href="about.html">Meet the team</a>
+      </div>
     </div>
   </div>
 
   <main class="wrap">
-    <div class="cards" id="summary">
-      <div class="card"><div class="label">Holdings market value</div><div class="value" id="s-value">&ndash;</div></div>
-      <div class="card"><div class="label">Holdings cost basis</div><div class="value" id="s-cost">&ndash;</div></div>
-      <div class="card"><div class="label">Unrealized gain / loss</div><div class="value" id="s-gain">&ndash;</div></div>
-      <div class="card"><div class="label">Unrealized ROI</div><div class="value" id="s-roi">&ndash;</div></div>
+    <div class="cards" id="home-cards">
+      <div class="card"><div class="label" id="h1-l">Portfolio worth</div><div class="value" id="h1-v">&ndash;</div><div class="sub" id="h1-s"></div></div>
+      <div class="card"><div class="label" id="h2-l">Return since inception</div><div class="value" id="h2-v">&ndash;</div><div class="sub" id="h2-s"></div></div>
+      <div class="card"><div class="label" id="h3-l">Year to date</div><div class="value" id="h3-v">&ndash;</div><div class="sub" id="h3-s"></div></div>
+      <div class="card"><div class="label" id="h4-l">Positions held</div><div class="value" id="h4-v">&ndash;</div><div class="sub" id="h4-s"></div></div>
     </div>
-    <div class="cards second" id="fund">
-      <div class="card"><div class="label">Realized gain / loss</div><div class="value" id="f-real">&ndash;</div></div>
-      <div class="card"><div class="label">Total gain / loss</div><div class="value" id="f-total">&ndash;</div></div>
-      <div class="card"><div class="label">Total ROI (all trades)</div><div class="value" id="f-roi">&ndash;</div></div>
-      <div class="card"><div class="label">Closed trades</div><div class="value" id="f-closed">&ndash;</div><div class="sub" id="f-win"></div></div>
-    </div>
-    <p class="note" id="fxnote"></p>
-
-    <div id="status"></div>
+    <p class="note"><a href="portfolio.html">See every holding, trade and the performance graph &rarr;</a></p>
 
     <section class="block">
-      <h2>Sector allocation</h2>
-      <div class="alloc-bar" id="alloc"></div>
-      <div class="legend" id="legend"></div>
+      <div class="section-head"><h2>Upcoming events</h2><a href="events.html">All events &rarr;</a></div>
+      <div class="events-row" id="home-events"></div>
     </section>
 
     <section class="block">
-      <h2>Current holdings</h2>
-      <div class="controls">
-        <div id="chips"></div>
-        <div class="spacer"></div>
-        <label class="toggle"><input type="checkbox" id="group" checked> Group by sector</label>
+      <h2>What we do</h2>
+      <div class="pillars">
+        <div class="card"><strong>Learn</strong><br><span class="name">Workshops linking financial statements to valuation.</span></div>
+        <div class="card"><strong>Analyze</strong><br><span class="name">Student-led stock pitches with accounting-driven research.</span></div>
+        <div class="card"><strong>Invest</strong><br><span class="name">A transparent, tracked portfolio you can follow here.</span></div>
       </div>
-      <div class="table-wrap">
-        <table id="holdings-table">
-          <thead>
-            <tr>
-              <th data-k="ticker">Ticker</th>
-              <th data-k="sector">Sector</th>
-              <th data-k="shares">Shares</th>
-              <th data-k="avg">Avg price</th>
-              <th data-k="price">Current</th>
-              <th data-k="valueCad">Value (CAD)</th>
-              <th data-k="gainCad">Unrealized G/L</th>
-              <th data-k="roi">ROI</th>
-              <th data-k="buyDate">Bought</th>
-            </tr>
-          </thead>
-          <tbody id="rows"></tbody>
-        </table>
-      </div>
-      <p class="note" id="updated"></p>
     </section>
 
-    <section class="block">
-      <h2>Recent sells</h2>
-      <div class="table-wrap">
-        <table id="sells-table">
-          <thead>
-            <tr>
-              <th>Sold</th>
-              <th>Ticker</th>
-              <th>Shares</th>
-              <th>Avg cost</th>
-              <th>Avg sell price</th>
-              <th>Realized G/L (CAD)</th>
-              <th>Return</th>
-            </tr>
-          </thead>
-          <tbody id="sellRows"></tbody>
-        </table>
+    <section class="block two-col">
+      <div>
+        <h2>Get in touch</h2>
+        <p>Questions about the club, hiring, sponsorship or partnerships? Reach out and a member of the executive team will get back to you.</p>
       </div>
-      <p class="note"><button class="linkbtn" id="moreSells" hidden>Show all sells</button></p>
-      <p class="note">Total ROI = (realized + unrealized gain) &divide; total cost of every purchase. Cost uses the average price method. All totals are in CAD. USD amounts are converted at today's exchange rate, not the rate on the trade date, so CAD figures can differ slightly from IBKR.</p>
+      <div data-contact></div>
     </section>
   </main>
 
-  <footer>
-    <div class="wrap">
-      K2 Capital, Queen's University. For educational purposes only; nothing here is investment advice.
-      Prices may be delayed. K2 Capital is a student club and is not an official Queen's University publication.
-    </div>
-  </footer>
+  <footer id="site-footer"></footer>
 
-  <script src="app.js"></script>
+  <script src="site.js"></script>
+  <script src="events-data.js"></script>
+  <script src="sample-data.js"></script>
+  <script src="k2.js"></script>
+  <script src="events-ui.js"></script>
+  <script>
+    (async () => {
+      const { $, money, money0, pct, cls, setValue, setText, totals } = K2;
+      renderEventCards($("home-events"), upcomingEvents(3), "No events scheduled yet. Follow our Instagram for updates.");
+      try {
+        const d = await K2.load();
+        const p = d.performance;
+        const t = totals(d.holdings);
+        if (p) {
+          setValue("h1-v", money(p.latest.nav)); setText("h1-s", "as of " + K2.fmtDate(p.latest.date));
+          setValue("h2-v", pct(p.sinceInception), cls(p.sinceInception)); setText("h2-s", "time-weighted");
+          setValue("h3-v", pct(p.ytd), cls(p.ytd)); setText("h3-s", "so far this year");
+        } else {
+          setText("h1-l", "Holdings market value"); setValue("h1-v", money(t.value));
+          setText("h2-l", "Unrealized gain / loss"); setValue("h2-v", money(t.gain), cls(t.gain));
+          setText("h3-l", "Unrealized ROI"); setValue("h3-v", pct(t.roi), cls(t.roi));
+        }
+        setValue("h4-v", String(d.holdings.length));
+        setText("h4-s", "across " + new Set(d.holdings.map((h) => h.sector || "Other")).size + " sectors");
+      } catch (e) { console.error(e); }
+    })();
+  </script>
 </body>
 </html>
