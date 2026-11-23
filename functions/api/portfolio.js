@@ -7,6 +7,7 @@
 //
 // Environment variables (Cloudflare Pages > Settings > Variables and secrets):
 //   TRANSACTIONS_CSV_URL  published CSV link of the Transactions tab (preferred)
+//   PERFORMANCE_CSV_URL   published CSV link of the Performance tab (portfolio worth over time)
 //   SHEET_CSV_URL         legacy Holdings tab link (still works if Transactions is not set)
 //   FINNHUB_KEY           Finnhub API key
 //   USDCAD_RATE           optional: fixed USD->CAD rate instead of the automatic one
@@ -216,6 +217,74 @@ async function getUsdCad(env) {
   return { rate: 1.4, source: "estimate", failed: true };
 }
 
+
+// ---------- Performance tab (portfolio worth over time) ----------
+
+// Performance tab columns: date, portfolio_value (CAD, IBKR "net liquidation value"), net_deposits (CAD, optional:
+// money added (+) or taken out (-) since the previous row).
+export function rowsToPerformance(rows) {
+  if (!rows.length) return [];
+  const head = rows[0].map(normHeader);
+  const col = (r, name) => { const i = head.indexOf(name); return i >= 0 ? (r[i] || "").trim() : ""; };
+  return rows.slice(1)
+    .map((r) => ({
+      date: parseDate(col(r, "date")),
+      nav: num(col(r, "portfolio_value") || col(r, "value") || col(r, "nav")),
+      flow: num(col(r, "net_deposits") || col(r, "deposits")) || 0,
+    }))
+    .filter((p) => p.date && isFinite(p.nav) && p.nav > 0)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
+
+// Time-weighted return: each period's return strips out that row's deposit, then periods are chained.
+// The first row is the starting balance (its deposit is ignored).
+export function computePerformance(rows) {
+  if (!rows.length) return null;
+  const points = [];
+  let cum = 0, contributed = rows[0].nav;
+  rows.forEach((r, i) => {
+    let periodPct = null;
+    if (i > 0) {
+      contributed += r.flow;
+      const prev = rows[i - 1].nav;
+      periodPct = (r.nav - r.flow) / prev - 1;
+      cum = (1 + cum) * (1 + periodPct) - 1;
+    }
+    points.push({ date: r.date, nav: r.nav, flow: i ? r.flow : 0, contributed, cum, periodPct });
+  });
+  const last = points[points.length - 1];
+  const prevYearEnd = `${+last.date.slice(0, 4) - 1}-12-31`;
+  let base = 0;
+  points.forEach((p, i) => { if (p.date <= prevYearEnd) base = i; });
+  const ytd = (1 + last.cum) / (1 + points[base].cum) - 1;
+  const prev = points.length > 1 ? points[points.length - 2] : null;
+  return {
+    points,
+    latest: { date: last.date, nav: last.nav },
+    contributed: last.contributed,
+    gain: last.nav - last.contributed,
+    sinceInception: last.cum,
+    ytd,
+    lastPeriod: prev ? { pct: last.periodPct, gain: last.nav - prev.nav - last.flow } : null,
+  };
+}
+
+function demoPerformanceRows() {
+  let s = 12345;
+  const rand = () => { s |= 0; s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const rows = [];
+  let nav = 7000;
+  const start = Date.UTC(2025, 8, 15);
+  for (let w = 0; ; w++) {
+    const d = new Date(start + w * 7 * 86400000).toISOString().slice(0, 10);
+    if (d > "2026-11-16") break;
+    const flow = w === 0 ? 7000 : d === "2026-01-12" ? 1500 : d === "2026-06-01" ? 1000 : 0;
+    if (w > 0) nav = nav * (1 + 0.0035 + (rand() - 0.5) * 0.045) + flow;
+    rows.push({ date: d, nav: Math.round(nav * 100) / 100, flow });
+  }
+  return rows;
+}
+
 // ---------- Demo data (shown until the sheet is connected) ----------
 
 export const SAMPLE_TRANSACTIONS = [
@@ -240,9 +309,9 @@ export function demoResponse() {
     updated: new Date().toISOString(),
     warnings: [],
     fx: { USD: 1.4, CAD: 1, source: "sample rate" },
-    invested: p.invested,
     holdings: p.holdings.map((h) => ({ ...h, price: SAMPLE_PRICES[h.ticker] ?? null })),
     sells: p.sells,
+    performance: computePerformance(demoPerformanceRows()),
   };
 }
 
@@ -266,13 +335,22 @@ export async function onRequestGet(context) {
   if (hit) return hit;
 
   try {
-    const sheetRes = await fetch(sheetUrl);
+    const [sheetRes, perfRes] = await Promise.all([
+      fetch(sheetUrl),
+      env.PERFORMANCE_CSV_URL ? fetch(env.PERFORMANCE_CSV_URL).catch(() => null) : Promise.resolve(null),
+    ]);
     if (!sheetRes.ok) throw new Error("Could not read the Google Sheet (HTTP " + sheetRes.status + ")");
     const rows = parseCsv(await sheetRes.text());
     const parsed = env.TRANSACTIONS_CSV_URL ? rowsToTransactions(rows) : rowsToLegacyTransactions(rows);
     const p = buildPortfolio(parsed.transactions);
     const warnings = [...p.warnings];
     if (parsed.skipped.length) warnings.push(`Skipped incomplete sheet rows: ${parsed.skipped.slice(0, 10).join(", ")}`);
+
+    let performance = null;
+    if (env.PERFORMANCE_CSV_URL) {
+      if (perfRes && perfRes.ok) performance = computePerformance(rowsToPerformance(parseCsv(await perfRes.text())));
+      else warnings.push("Could not read the Performance tab");
+    }
 
     const fx = await getUsdCad(env);
     if (fx.failed) warnings.push("USD to CAD rate unavailable, using an estimate");
@@ -295,9 +373,9 @@ export async function onRequestGet(context) {
       updated: new Date().toISOString(),
       warnings,
       fx: { USD: fx.rate, CAD: 1, date: fx.date, source: fx.source },
-      invested: p.invested,
       holdings: p.holdings.map((h) => ({ ...h, price: prices[h.ticker] ?? null })),
       sells: p.sells,
+      performance,
     });
     context.waitUntil(cache.put(cacheKey, response.clone()));
     return response;
