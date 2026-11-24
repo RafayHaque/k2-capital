@@ -31,7 +31,7 @@ function renderPerf() {
 
 function renderEarlier() {
   const f = state.data.fund;
-  const list = f && f.byStock ? f.byStock : [];
+  const list = f ? (f.byStock || f.prior || []) : [];
   $("earlier-block").hidden = !list.length;
   if (!list.length) return;
   setValue("e-real", money(f.realized), cls(f.realized));
