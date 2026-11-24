@@ -123,10 +123,18 @@ function drawChart() {
 function weekPeriods() {
   const p = state.perf;
   if (p && p.points.length > 1) {
-    return p.points.slice(1).map((pt, i) => ({
+    const list = p.points.slice(1).map((pt, i) => ({
       start: p.points[i].date, end: pt.date, // trades with start < date <= end belong to this week
       pct: pt.periodPct, gain: pt.nav - p.points[i].nav - pt.flow, flow: pt.flow, cum: pt.cum, nav: pt.nav,
     })).reverse();
+    // The newest, still-open week: from the last saved Friday to today, using the live fund value.
+    const f = state.data.fund, last = p.points[p.points.length - 1];
+    const d = new Date(), today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    if (f && today > last.date) {
+      const flow = f.contributed - last.contributed;
+      list.unshift({ start: last.date, end: today, label: "This week so far", pct: (f.nav - flow) / last.nav - 1, gain: f.nav - last.nav - flow, flow: Math.abs(flow) < 1 ? 0 : flow, cum: null, nav: f.nav });
+    }
+    return list;
   }
   const out = [];
   const d = new Date();
@@ -143,7 +151,7 @@ function weekPeriods() {
 
 function renderWeekSelect() {
   state.weeks = weekPeriods();
-  $("week-select").innerHTML = state.weeks.map((w, i) => `<option value="${i}">${fmtDate(w.end)}</option>`).join("");
+  $("week-select").innerHTML = state.weeks.map((w, i) => `<option value="${i}">${w.label || fmtDate(w.end)}</option>`).join("");
   renderWeek();
 }
 
