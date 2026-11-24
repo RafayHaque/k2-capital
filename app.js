@@ -162,8 +162,8 @@ function renderWeek() {
   setText("w-trades-sub", `${buys} buy${buys === 1 ? "" : "s"} · ${sells} sell${sells === 1 ? "" : "s"}`);
   setValue("w-real", sells ? money(realized) : "–", cls(sells ? realized : null));
   setText("w-real-sub", sells ? `from ${sells} sell${sells === 1 ? "" : "s"}` : "no sells");
-  setValue("w-since", pct(w.cum), cls(w.cum));
-  setText("w-since-sub", w.nav ? "worth " + money0(w.nav) : "");
+  setValue("w-since", w.nav ? money(w.nav) : "–");
+  setText("w-since-sub", w.nav ? "total fund, end of week" : "");
 
   $("week-trades-wrap").hidden = !trades.length;
   $("weekRows").innerHTML = trades.map((t) => `<tr>
@@ -174,7 +174,7 @@ function renderWeek() {
     <td>${money(t.price, t.currency)}</td>
     <td>${money(state.data.toCad(t.shares * t.price, t.currency))}</td>
   </tr>`).join("");
-  $("week-note").textContent = trades.length ? "" : "No trades this week.";
+  $("week-note").textContent = (trades.length ? "" : "No trades this week. ") + "Week return and gain are for the whole fund, so they include price moves on every holding, not only this week's trades. Realized gain counts sells only.";
 }
 
 // ---------- Current holdings ----------
