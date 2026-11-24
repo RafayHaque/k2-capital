@@ -242,3 +242,6 @@ section.block.first { margin-top: 40px; }
 .tile h3 { margin: 6px 0 6px; }
 .tile .fact { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: .86rem; color: var(--text); }
 .tile .fact b { color: var(--navy); }
+.chart .bench { fill: none; stroke: #c9a227; stroke-width: 2; stroke-dasharray: 6 4; }
+.avatar { width: 120px; height: 120px; object-position: center 20%; }
+.flip { height: 280px; }

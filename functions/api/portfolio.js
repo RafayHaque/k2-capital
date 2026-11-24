@@ -227,6 +227,30 @@ async function getUsdCad(env) {
 }
 
 
+
+// ---------- Benchmark: S&P 500 in CAD (VFV.TO, Vanguard S&P 500 ETF) ----------
+
+// Pure helper: for each date, the return since the first date, using the last close on or before it.
+export function alignBenchmark(dates, stamps, closes) {
+  const series = stamps.map((t, i) => ({ d: new Date(t * 1000).toISOString().slice(0, 10), c: closes[i] })).filter((x) => x.c > 0);
+  if (!series.length || !dates.length) return null;
+  const at = (date) => { let v = null; for (const x of series) { if (x.d <= date) v = x.c; else break; } return v; };
+  const base = at(dates[0]) ?? series[0].c;
+  return dates.map((d) => { const c = at(d); return c == null ? null : c / base - 1; });
+}
+
+async function getBenchmark(dates) {
+  try {
+    const t1 = Math.floor(new Date(dates[0] + "T00:00:00Z").getTime() / 1000) - 10 * 86400;
+    const t2 = Math.floor(Date.now() / 1000) + 86400;
+    const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/VFV.TO?period1=${t1}&period2=${t2}&interval=1d`, { headers: { "user-agent": "Mozilla/5.0" } });
+    if (!res.ok) return null;
+    const r = (await res.json())?.chart?.result?.[0];
+    const values = alignBenchmark(dates, r?.timestamp || [], r?.indicators?.quote?.[0]?.close || []);
+    return values ? { name: "S&P 500 (VFV, CAD)", values } : null;
+  } catch { return null; }
+}
+
 // ---------- Performance tab (portfolio worth over time) ----------
 
 // Performance tab columns: date, portfolio_value (CAD, IBKR "net liquidation value"), net_deposits (CAD, optional:
@@ -403,6 +427,8 @@ export function demoResponse() {
   const k = fund.nav / last.nav;
   hist.forEach((r, i) => { if (i) { r.nav = Math.round(r.nav * (1 + (k - 1) * i / (hist.length - 1)) * 100) / 100; } });
   hist[hist.length - 1].nav = Math.round(fund.nav * 100) / 100;
+  const performance = computePerformance(hist);
+  performance.benchmark = { name: "S&P 500 (VFV, CAD)", values: performance.points.map((_, i) => 0.0016 * i + 0.03 * Math.sin(i / 5)) };
   return {
     demo: true,
     updated: new Date().toISOString(),
@@ -411,7 +437,7 @@ export function demoResponse() {
     holdings,
     sells: p.sells,
     trades: tradesList(SAMPLE_TRANSACTIONS),
-    performance: computePerformance(hist),
+    performance,
     fund,
   };
 }
@@ -431,7 +457,7 @@ export async function onRequestGet(context) {
   if (!sheetUrl || !env.FINNHUB_KEY) return json(demoResponse());
 
   const cache = caches.default;
-  const cacheKey = new Request(new URL("/api/portfolio?v=4", request.url).toString()); // bump v when the response shape changes
+  const cacheKey = new Request(new URL("/api/portfolio?v=5", request.url).toString()); // bump v when the response shape changes
   const hit = await cache.match(cacheKey);
   if (hit) return hit;
 
@@ -450,7 +476,10 @@ export async function onRequestGet(context) {
 
     let performance = null;
     if (env.PERFORMANCE_CSV_URL) {
-      if (perfRes && perfRes.ok) performance = computePerformance(rowsToPerformance(parseCsv(await perfRes.text())));
+      if (perfRes && perfRes.ok) {
+        performance = computePerformance(rowsToPerformance(parseCsv(await perfRes.text())));
+        if (performance && performance.points.length > 1) performance.benchmark = await getBenchmark(performance.points.map((x) => x.date));
+      }
       else warnings.push("Could not read the Performance tab");
     }
 

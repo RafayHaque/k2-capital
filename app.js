@@ -25,7 +25,9 @@ function renderPerf() {
   $("perf-empty").hidden = ok;
   $("perf-block").hidden = !ok;
   if (!ok) return;
-  setText("perf-note", "Weekly snapshots of portfolio worth. Dashed line shows money contributed to the fund.");
+  setText("perf-note", state.chartMode === "return" && p.benchmark
+    ? "Solid line: K2 Capital (time-weighted). Dashed line: S&P 500 in CAD (VFV ETF), same start date."
+    : "Weekly snapshots of portfolio worth. Dashed line shows money contributed to the fund.");
   drawChart();
 }
 
@@ -49,6 +51,9 @@ function niceStep(raw) {
 
 function drawChart() {
   const host = $("chart");
+  if (state.perf) setText("perf-note", state.chartMode === "return" && state.perf.benchmark
+    ? "Solid line: K2 Capital (time-weighted). Dashed line: S&P 500 in CAD (VFV ETF), same start date."
+    : "Weekly snapshots of portfolio worth. Dashed line shows money contributed to the fund.");
   const pts = state.perf && state.perf.points;
   if (!pts || !pts.length) { host.innerHTML = ""; return; }
 
@@ -57,7 +62,9 @@ function drawChart() {
   const t = pts.map((p) => new Date(p.date + "T12:00:00").getTime());
   const main = pts.map((p) => (mode === "value" ? p.nav : p.cum * 100));
   const extra = mode === "value" ? pts.map((p) => p.contributed) : [];
-  let lo = Math.min(...main, ...extra), hi = Math.max(...main, ...extra);
+  const bm = mode === "return" && state.perf.benchmark ? state.perf.benchmark.values.map((v) => (v == null ? null : v * 100)) : null;
+  const bmVals = bm ? bm.filter((v) => v != null) : [];
+  let lo = Math.min(...main, ...extra, ...bmVals), hi = Math.max(...main, ...extra, ...bmVals);
   if (mode === "return") { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
   const pad = (hi - lo) * 0.08 || 1;
   lo -= pad; hi += pad;
@@ -76,6 +83,8 @@ function drawChart() {
   const area = `${line}L${x(t[t.length - 1]).toFixed(1)},${y(lo).toFixed(1)}L${x(t[0]).toFixed(1)},${y(lo).toFixed(1)}Z`;
   const contrib = extra.length ? "M" + extra.map((v, i) => `${x(t[i]).toFixed(1)},${y(v).toFixed(1)}`).join("L") : "";
 
+  const bmPath = bm ? bm.map((v, i) => (v == null ? "" : `${i && bm[i - 1] != null ? "L" : "M"}${x(t[i]).toFixed(1)},${y(v).toFixed(1)}`)).join("") : "";
+
   const labelIdx = [0, 1, 2, 3, 4].map((k) => Math.round((k * (pts.length - 1)) / 4)).filter((v, i, a) => a.indexOf(v) === i);
   const xl = labelIdx.map((i) => {
     const d = new Date(t[i]);
@@ -88,6 +97,7 @@ function drawChart() {
       ${mode === "return" ? `<line x1="${m.l}" x2="${W - m.r}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="zero"/>` : ""}
       <path d="${area}" class="area"/>
       ${contrib ? `<path d="${contrib}" class="contrib"/>` : ""}
+      ${bmPath ? `<path d="${bmPath}" class="bench"/>` : ""}
       <path d="${line}" class="series"/>
       ${xl}
       <line id="hx" class="hx" y1="${m.t}" y2="${H - m.b}" x1="0" x2="0" hidden/>
@@ -106,7 +116,7 @@ function drawChart() {
     hx.hidden = hd.hidden = tip.hidden = false;
     tip.innerHTML = `<strong>${fmtDate(p.date)}</strong><br>` + (mode === "value"
       ? `Worth ${money(p.nav)}<br><span class="muted-cell">Contributed ${money(p.contributed)}</span>`
-      : `Return ${pct(p.cum)}<br><span class="muted-cell">Worth ${money(p.nav)}</span>`);
+      : `K2 ${pct(p.cum)}` + (bm && bm[best] != null ? `<br>S&amp;P 500 ${pct(bm[best] / 100)}` : "") + `<br><span class="muted-cell">Worth ${money(p.nav)}</span>`);
     const left = Math.min(Math.max((cx / W) * box.width - 70, 4), box.width - 150);
     tip.style.left = left + "px";
     tip.style.top = Math.max((cy / H) * box.height - 70, 0) + "px";
