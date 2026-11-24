@@ -293,9 +293,14 @@ async function load() {
 
     $("fxnote").textContent = `Holdings are in CAD. 1 USD = ${data.rate("USD").toFixed(4)} CAD (${data.fx.source || "rate"}${data.fx.date ? ", " + data.fx.date : ""}).`;
     $("updated").textContent = data.demo ? "Sample prices." : "Prices last refreshed " + new Date(data.updated).toLocaleString("en-CA") + ". Quotes refresh about every 15 minutes and may be delayed.";
-    renderPerf(); renderEarlier(); renderWeekSelect(); renderHoldingsSummary(); renderAlloc(); renderChips(); renderRows(); renderSells();
+    // Each section is drawn on its own so one problem can't blank the whole page.
+    const problems = [];
+    [renderPerf, renderEarlier, renderWeekSelect, renderHoldingsSummary, renderAlloc, renderChips, renderRows, renderSells].forEach((fn) => {
+      try { fn(); } catch (err) { console.error(fn.name, err); problems.push(fn.name + ": " + err.message); }
+    });
+    if (problems.length) setStatus("Part of the page failed to draw (" + esc(problems.join("; ")) + ")", "error");
   } catch (e) {
-    setStatus("Couldn't load the portfolio right now. Please try again shortly.", "error");
+    setStatus("Couldn't load the portfolio (" + esc(e.message || e) + "). Open /api/portfolio on this site to see the details.", "error");
     console.error(e);
   }
 }
