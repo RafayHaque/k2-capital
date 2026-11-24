@@ -79,24 +79,32 @@ Optional variable: `USDCAD_RATE` to fix the exchange rate instead of using the a
 How numbers are calculated: average cost method; USD converted to CAD at today's rate; Total ROI = (realized + unrealized) divided by the cost of every purchase.
 
 
-## Performance tab (portfolio worth, returns, graph, leverage)
+## Fund tab (portfolio worth, total gain, return, leverage)
 
-A second tab, `Performance`, powers the fund-level boxes, the graph and the Leverage box. Add one row per week (or any regular interval) from your IBKR statement:
+This tab replaces linking to a brokerage. Portfolio worth is worked out from what the club put in plus everything it has earned, so every trade the team logs in Transactions updates it automatically.
 
-`date, portfolio_value, net_deposits`
+`Portfolio worth = capital contributed + realized gains + unrealized gains + interest/dividends`
 
-- `portfolio_value`: total account value in CAD (IBKR "Net Liquidation Value"), so it already includes cash, margin and everything else
-- `net_deposits`: money added (+) or withdrawn (-) since the previous row, in CAD. Leave 0 if none. The first row is your starting balance and its deposit is ignored.
-- Returns are time-weighted: each period's return removes that row's deposit, so adding money never looks like a gain.
-- Year to date uses the last row on or before Dec 31 as its starting point.
+Headers in row 1: `date, type, ticker, amount_cad, note` (see `sample-fund.csv`). Types:
+- `OPENING`: starting balance when tracking began
+- `DEPOSIT` / `WITHDRAWAL`: money added or taken out (enter withdrawals as positive numbers). Add a row whenever capital moves.
+- `INTEREST`, `DIVIDEND`, `OTHER`: income, negative if it is a cost (margin interest, fees not in trades)
+- `REALIZED_PRIOR`: profit or loss on a stock sold *before* the Transactions tab starts, one row per stock. These show in "Earlier results by stock". Sells logged in Transactions dated after the latest REALIZED_PRIOR date are added automatically (no double counting).
 
-Setup: add the tab (see `sample-performance.csv`), publish it as CSV (File > Share > Publish to web, pick the tab), and add the Cloudflare variable `PERFORMANCE_CSV_URL`. Then Retry deployment once.
+Setup: publish the Fund tab as CSV (File > Share > Publish to web) and add the Cloudflare variable `FUND_CSV_URL`, then Retry deployment once.
 
-Leverage = market value of current holdings divided by the latest portfolio worth, so keep the Performance tab current.
+Leverage = market value of holdings divided by portfolio worth.
+
+Day to day: a buy goes in Transactions (updates Current holdings); a sell goes in Transactions (updates Recent sells and realized gains); both change portfolio worth. You only touch the Fund tab for deposits, withdrawals and interest.
+
+## Performance tab (optional, for the graph)
+
+Add one row per week with `date, portfolio_value, net_deposits` (see `sample-performance.csv`), publish as CSV, and set `PERFORMANCE_CSV_URL`. This only powers the graph and the weekly return; the top numbers work without it.
 
 ## Editing the other pages
 
 All edited on GitHub (open the file, pencil icon, Commit changes):
+- `styles.css`: colours (variables at the top of `:root`), fonts, spacing.
 - `site.js`: contact details (email, LinkedIn, Instagram) and the menu. Change once, every page updates.
 - `events-data.js`: the events list for the Home and Events pages. Delete the entries marked `sample: true`.
 - `about.html`: the `TEAM` list (intro, LinkedIn, photo for each person) and the `PHOTOS` list near the top of the script.

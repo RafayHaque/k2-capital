@@ -16,7 +16,7 @@
   <div class="hero">
     <div class="wrap">
       <h1>Our Portfolio</h1>
-      <p>How the whole fund has performed since inception, and every position we hold today with our entry price, the current market price and return.</p>
+      <p>How the whole fund is doing, and every position we hold today with our entry price, the current market price and return.</p>
     </div>
   </div>
 
@@ -25,8 +25,8 @@
     <div class="cards" id="perf-cards">
       <div class="card"><div class="label">Portfolio worth</div><div class="value" id="p-worth">&ndash;</div><div class="sub" id="p-worth-sub"></div></div>
       <div class="card"><div class="label">Total gain / loss</div><div class="value" id="p-gain">&ndash;</div><div class="sub" id="p-gain-sub"></div></div>
-      <div class="card"><div class="label">Return since inception</div><div class="value" id="p-since">&ndash;</div><div class="sub">time-weighted</div></div>
-      <div class="card"><div class="label">Year to date</div><div class="value" id="p-ytd">&ndash;</div><div class="sub" id="p-ytd-sub"></div></div>
+      <div class="card"><div class="label">Return on capital</div><div class="value" id="p-since">&ndash;</div><div class="sub" id="p-since-sub"></div></div>
+      <div class="card"><div class="label">Capital contributed</div><div class="value" id="p-ytd">&ndash;</div><div class="sub" id="p-ytd-sub"></div></div>
     </div>
 
     <div id="status"></div>
@@ -34,7 +34,7 @@
     <section class="block">
       <h2>Fund performance</h2>
       <div id="perf-empty" class="empty" hidden>
-        Fund performance appears here once the Performance tab is connected (portfolio worth by week and any deposits).
+        The graph appears once there are at least two weekly snapshots in the Performance tab (optional). The numbers above work without it.
       </div>
       <div id="perf-block">
         <div class="controls">
@@ -138,10 +138,21 @@
       </div>
       <p class="note"><button class="linkbtn" id="moreSells" hidden>Show all sells</button></p>
       <p class="note">
-        Portfolio worth, total gain and returns come from our brokerage account value and include cash, leverage and every trade;
-        returns are time-weighted so new deposits don't count as gains. Holdings figures use the average cost method and are in CAD,
-        with USD converted at today's exchange rate. Leverage = market value of holdings &divide; portfolio worth.
+        Portfolio worth = capital contributed + realized gains + unrealized gains + interest, so it includes cash and leverage and updates
+        with every trade logged. Holdings figures use the average cost method in CAD, with USD converted at today's exchange rate.
+        Leverage = market value of holdings &divide; portfolio worth.
       </p>
+    </section>
+    <!-- Earlier results -->
+    <section class="block" id="earlier-block" hidden>
+      <h2>Earlier results by stock</h2>
+      <div class="cards flat three">
+        <div class="card"><div class="label">Realized before trade log</div><div class="value" id="e-real">&ndash;</div><div class="sub" id="e-real-sub"></div></div>
+        <div class="card"><div class="label">Stocks with a gain</div><div class="value" id="e-win">&ndash;</div></div>
+        <div class="card"><div class="label">Stocks with a loss</div><div class="value" id="e-lose">&ndash;</div></div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Stock</th><th>Realized G/L (CAD)</th></tr></thead><tbody id="earlierRows"></tbody></table></div>
+      <p class="note">Results from before trades were logged on this site, one line per stock. New sells appear in Recent sells above.</p>
     </section>
   </main>
 
