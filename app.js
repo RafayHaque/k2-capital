@@ -31,13 +31,14 @@ function renderPerf() {
 
 function renderEarlier() {
   const f = state.data.fund;
-  $("earlier-block").hidden = !f || !f.prior.length;
-  if (!f || !f.prior.length) return;
-  const win = f.prior.filter((x) => x.amount > 0).length, lose = f.prior.filter((x) => x.amount < 0).length;
-  setValue("e-real", money(f.realizedPrior), cls(f.realizedPrior));
-  setText("e-real-sub", "through " + fmtDate(f.priorDate));
-  setValue("e-win", String(win)); setValue("e-lose", String(lose));
-  $("earlierRows").innerHTML = f.prior.map((x) => `<tr><td><span class="ticker">${esc(x.ticker)}</span></td><td class="${cls(x.amount)}">${money(x.amount)}</td></tr>`).join("");
+  const list = f && f.byStock ? f.byStock : [];
+  $("earlier-block").hidden = !list.length;
+  if (!list.length) return;
+  setValue("e-real", money(f.realized), cls(f.realized));
+  setText("e-real-sub", "earlier results + sells logged since");
+  setValue("e-win", String(list.filter((x) => x.amount > 0).length));
+  setValue("e-lose", String(list.filter((x) => x.amount < 0).length));
+  $("earlierRows").innerHTML = list.map((x) => `<tr><td><span class="ticker">${esc(x.ticker)}</span></td><td class="${cls(x.amount)}">${money(x.amount)}</td></tr>`).join("");
 }
 
 function niceStep(raw) {

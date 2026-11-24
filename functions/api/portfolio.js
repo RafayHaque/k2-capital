@@ -334,12 +334,19 @@ export function computeFund(entries, holdings, sells, rateOf) {
   for (const e of priorEntries) byTicker[e.ticker || "Other"] = (byTicker[e.ticker || "Other"] || 0) + e.amount;
   const prior = Object.entries(byTicker).map(([ticker, amount]) => ({ ticker, amount })).sort((a, b) => b.amount - a.amount);
 
+  // All-time realized by stock: earlier results plus every sell logged since (".TO" listings count as the same stock).
+  const key = (t) => String(t || "Other").replace(/\.TO$/, "");
+  const all = {};
+  for (const e of priorEntries) all[key(e.ticker)] = (all[key(e.ticker)] || 0) + e.amount;
+  for (const x of sells.filter((x) => !priorDate || x.date > priorDate)) all[key(x.ticker)] = (all[key(x.ticker)] || 0) + x.realized * rateOf(x.currency);
+  const byStock = Object.entries(all).map(([ticker, amount]) => ({ ticker, amount })).sort((a, b) => b.amount - a.amount);
+
   return {
     contributed, opening, deposits, withdrawals, income,
     realized, realizedPrior, realizedLogged, unrealized, gain, nav,
     returnOnCapital: contributed > 0 ? gain / contributed : null,
     holdingsValue, leverage: nav > 0 ? holdingsValue / nav : null,
-    priorDate, prior, unpriced,
+    priorDate, prior, byStock, unpriced,
   };
 }
 
