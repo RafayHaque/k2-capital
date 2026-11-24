@@ -418,10 +418,10 @@ export function demoResponse() {
 
 // ---------- Handler ----------
 
-function json(body, status = 200) {
+function json(body, status = 200, maxAge = CACHE_SECONDS) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json", "cache-control": `public, max-age=${CACHE_SECONDS}` },
+    headers: { "content-type": "application/json", "cache-control": `public, max-age=${maxAge}` },
   });
 }
 
@@ -431,7 +431,7 @@ export async function onRequestGet(context) {
   if (!sheetUrl || !env.FINNHUB_KEY) return json(demoResponse());
 
   const cache = caches.default;
-  const cacheKey = new Request(new URL("/api/portfolio", request.url).toString());
+  const cacheKey = new Request(new URL("/api/portfolio?v=4", request.url).toString()); // bump v when the response shape changes
   const hit = await cache.match(cacheKey);
   if (hit) return hit;
 
@@ -480,7 +480,7 @@ export async function onRequestGet(context) {
       } else warnings.push("Could not read the Fund tab");
     }
 
-    const response = json({
+    const payload = {
       demo: false,
       updated: new Date().toISOString(),
       warnings,
@@ -490,8 +490,9 @@ export async function onRequestGet(context) {
       trades: tradesList(parsed.transactions),
       performance,
       fund,
-    });
-    context.waitUntil(cache.put(cacheKey, response.clone()));
+    };
+    const response = json(payload, 200, 60); // browsers re-check after a minute
+    context.waitUntil(cache.put(cacheKey, json(payload, 200, CACHE_SECONDS))); // Cloudflare keeps it 15 minutes
     return response;
   } catch (e) {
     return json({ error: String(e.message || e) }, 502);
