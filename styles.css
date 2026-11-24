@@ -34,7 +34,7 @@ header.site .wrap {
   display: flex; align-items: center; justify-content: space-between;
   padding-top: 16px; padding-bottom: 16px; flex-wrap: wrap; gap: 12px;
 }
-h1, h2, h3, .brand-text { font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif; }
+h1, h2, h3, .brand-text { font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif; font-variant-numeric: lining-nums; font-feature-settings: "lnum" 1; }
 h1, h2 { font-weight: 700; }
 .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.6rem; letter-spacing: .02em; color: #fff; text-decoration: none; }
 .brand img { height: 60px; width: 60px; border-radius: 10px; display: block; }
@@ -232,3 +232,13 @@ section.block.first { margin-top: 40px; }
 #week-table th, #week-table td { text-align: right; padding-left: 10px; padding-right: 10px; }
 #week-table th:nth-child(-n+3), #week-table td:nth-child(-n+3) { text-align: left; }
 .table-wrap[hidden] { display: none; }
+
+/* Team groups and TILES facts */
+.team-group { margin-top: 22px; }
+.team-group h3.subhead { margin: 0 0 10px; }
+.avatar { object-fit: cover; }
+.tiles { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+@media (min-width: 1000px) { .tiles { grid-template-columns: repeat(5, 1fr); } }
+.tile h3 { margin: 6px 0 6px; }
+.tile .fact { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: .86rem; color: var(--text); }
+.tile .fact b { color: var(--navy); }

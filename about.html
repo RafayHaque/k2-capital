@@ -62,13 +62,22 @@
 
     // photo: "images/team/name.jpg" (upload the picture to the images/team folder). linkedin: personal profile URL.
     // intro shows on the back of the card. Leave a field as "" to hide it.
+    // group sets the section on the page. photo: "images/team/photo-01.jpg" (upload pictures to images/team).
     const TEAM = [
-      { name: "Kenny Li",          role: "Co-Founder",         bio: "PwC",      intro: "", linkedin: "", photo: "" },
-      { name: "Rafay Haque",       role: "Co-Founder",         bio: "KPMG",     intro: "", linkedin: "", photo: "" },
-      { name: "Chris Jin",         role: "Executive Director", bio: "PwC",      intro: "", linkedin: "", photo: "" },
-      { name: "Tristan Chevrette", role: "Executive Director", bio: "KPMG",     intro: "", linkedin: "", photo: "" },
-      { name: "Julia Hamam",       role: "Executive Director", bio: "Deloitte", intro: "", linkedin: "", photo: "" },
-      // Add the Accounting and Finance Associates here, same format.
+      { group: "Co-Founders", name: "Kenny Li",          role: "Co-Founder",         bio: "PwC",      intro: "", linkedin: "", photo: "" },
+      { group: "Co-Founders", name: "Rafay Haque",       role: "Co-Founder",         bio: "KPMG",     intro: "", linkedin: "", photo: "" },
+      { group: "Executive Directors", name: "Chris Jin",         role: "Executive Director", bio: "PwC",      intro: "", linkedin: "", photo: "" },
+      { group: "Executive Directors", name: "Tristan Chevrette", role: "Executive Director", bio: "KPMG",     intro: "", linkedin: "", photo: "" },
+      { group: "Executive Directors", name: "Julia Hamam",       role: "Executive Director", bio: "Deloitte", intro: "", linkedin: "", photo: "" },
+      { group: "Accounting Associates", name: "Priyanka Kugenthiraja", role: "Accounting Associate", bio: "", intro: "", linkedin: "", photo: "" },
+      { group: "Accounting Associates", name: "Kelin Cheng",           role: "Accounting Associate", bio: "", intro: "", linkedin: "", photo: "" },
+      { group: "Accounting Associates", name: "Jason D'Cunha",         role: "Accounting Associate", bio: "", intro: "", linkedin: "", photo: "" },
+      { group: "Accounting Associates", name: "Daniel Pu",             role: "Accounting Associate", bio: "", intro: "", linkedin: "", photo: "" },
+      { group: "Finance Associates", name: "Nima Anvari",  role: "Finance Associate", bio: "", intro: "", linkedin: "", photo: "" },
+      { group: "Finance Associates", name: "Jenny Wang",   role: "Finance Associate", bio: "", intro: "", linkedin: "", photo: "" },
+      { group: "Finance Associates", name: "Fola Akinola", role: "Finance Associate", bio: "", intro: "", linkedin: "", photo: "" },
+      { group: "Finance Associates", name: "Everett Cho-Chu", role: "Finance Associate", bio: "", intro: "", linkedin: "", photo: "" },
+      { group: "Marketing", name: "Daniel Li", role: "Marketing Associate", bio: "", intro: "", linkedin: "", photo: "" },
     ];
 
     // Upload pictures to the images/club folder and list them here, for example "images/club/social-1.jpg".
@@ -82,7 +91,7 @@
     const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     const $ = (id) => document.getElementById(id);
 
-    $("team").innerHTML = TEAM.map((p, i) => {
+    const cardHtml = (p) => {
       const initials = p.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
       const avatar = p.photo
         ? `<img class="avatar" src="${esc(p.photo)}" alt="${esc(p.name)}">`
@@ -98,7 +107,10 @@
             <div class="back-links">${li}<button type="button" class="linkbtn flip-btn" tabindex="-1">Back</button></div></div>
         </div>
       </div>`;
-    }).join("");
+    };
+    const groups = [...new Set(TEAM.map((p) => p.group || "Team"))];
+    $("team").className = "";
+    $("team").innerHTML = groups.map((g) => `<div class="team-group"><h3 class="subhead">${esc(g)}</h3><div class="grid">${TEAM.filter((p) => (p.group || "Team") === g).map(cardHtml).join("")}</div></div>`).join("");
     document.querySelectorAll(".flip").forEach((card) => {
       const toggle = (ev) => {
         if (ev.target.closest("a")) return; // let the LinkedIn link work

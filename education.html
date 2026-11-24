@@ -16,13 +16,13 @@
   <div class="hero">
     <div class="wrap">
       <h1>Education</h1>
-      <p>How we analyze a company, and resources for learning to read the accounting and the finance together.</p>
+      <p>Our TILES guide to student money, and resources for learning to read the accounting and the finance together.</p>
     </div>
   </div>
 
   <main class="wrap">
     <section class="block first">
-      <h2>The TILES framework</h2>
+      <h2>TILES: student money essentials</h2>
       <p class="lead" id="tiles-intro"></p>
       <div class="tiles" id="tiles"></div>
     </section>
@@ -40,15 +40,25 @@
   <script>
     // ---- Edit this section to update the page (on GitHub: open this file, click the pencil icon) ----
 
-    const TILES_INTRO = "Every pitch at K2 Capital follows the TILES framework, so ideas are comparable and the reasoning is easy to check.";
+    const TILES_INTRO = "TILES is our five-part guide to student money: Taxes, Investing, Legal, Earning and Savings. Each one comes with a quick fact worth knowing.";
 
-    // TODO: replace the placeholder letters, titles and descriptions with the real TILES framework.
+    // fact: a "Did you know" line. Edit the text below, or add/remove tiles, on GitHub.
     const TILES = [
-      { letter: "T", title: "Add what T stands for", body: "Describe this step in one or two sentences." },
-      { letter: "I", title: "Add what I stands for", body: "Describe this step in one or two sentences." },
-      { letter: "L", title: "Add what L stands for", body: "Describe this step in one or two sentences." },
-      { letter: "E", title: "Add what E stands for", body: "Describe this step in one or two sentences." },
-      { letter: "S", title: "Add what S stands for", body: "Describe this step in one or two sentences." },
+      { letter: "T", title: "Taxes", body: "Income Tax and Benefits Return (T1).",
+        stat: "25-35% of Canadian students do not file their T1.",
+        fact: "You can file and claim $600-700 every year even with $0 in income." },
+      { letter: "I", title: "Investing", body: "Day trading, fundamental valuation and fixed income instruments.",
+        stat: "After the U.S. tariff announcement, the U.S. stock market lost nearly $9.5 trillion in value.",
+        fact: "You can earn an annualized return of 2.6% by purchasing a 364-day Treasury bill." },
+      { letter: "L", title: "Legal", body: "Understand mortgages and the legal steps to register a company.",
+        stat: "Nearly 19% of startups collapse due to avoidable legal problems, yet a basic incorporation filing costs just $300.",
+        fact: "Registering a trademark for just $478 can protect your brand from lawsuits that often cost far over $50,000 to fight." },
+      { letter: "E", title: "Earning", body: "Explore ways to earn through side hustles and scholarships.",
+        stat: "Over $4 billion worth of scholarships are awarded to Canadian post-secondary students each year.",
+        fact: "About 50% of Canadian students work while studying, earning through jobs or side hustles." },
+      { letter: "S", title: "Savings", body: "TFSA, RESP, RRSP and FHSA.",
+        stat: "About 99% of Canadians have a bank account, but only about 50% have a TFSA.",
+        fact: "The FHSA lets first-time home buyers contribute up to $8,000 a year ($40,000 total) with tax-free growth and withdrawals for your first home." },
     ];
 
     // category: "Accounting", "Finance" or "Valuation" (add your own). link is optional.
@@ -62,7 +72,7 @@
     const $ = (id) => document.getElementById(id);
 
     $("tiles-intro").textContent = TILES_INTRO;
-    $("tiles").innerHTML = TILES.map((t) => `<div class="tile"><div class="letter">${esc(t.letter)}</div><h3>${esc(t.title)}</h3><p>${esc(t.body)}</p></div>`).join("");
+    $("tiles").innerHTML = TILES.map((t) => `<div class="tile"><div class="letter">${esc(t.letter)}</div><h3>${esc(t.title)}</h3><p>${esc(t.body)}</p>${t.stat ? `<p class="fact">${esc(t.stat)}</p>` : ""}${t.fact ? `<p class="fact"><b>Did you know?</b> ${esc(t.fact)}</p>` : ""}</div>`).join("");
 
     let cat = "All";
     function renderResources() {

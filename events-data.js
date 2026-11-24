@@ -12,8 +12,5 @@ const EVENT_TYPES = {
 };
 
 const EVENTS = [
-  { sample: true, type: "meeting", date: "2026-12-01", time: "6:00 PM", location: "Goodes Hall, Kingston", title: "Public portfolio meeting", description: "Review of the portfolio, recent trades and what we are watching. Open to all students." },
-  { sample: true, type: "pitch", date: "2026-12-08", time: "6:30 PM", location: "Goodes Hall, Kingston", title: "Associate stock pitch night", description: "Associates pitch a stock using the TILES framework. Members vote on what joins the watchlist." },
-  { sample: true, type: "case", date: "2027-01-23", time: "9:00 AM", location: "Kingston, ON", title: "K2 Capital case competition", description: "Teams of four analyze a company and present a valuation to a panel.", link: "" },
-  { sample: true, type: "meeting", date: "2026-11-17", time: "6:00 PM", location: "Goodes Hall, Kingston", title: "General club meeting", description: "Past event example." },
+  { type: "case", date: "2026-11-29", location: "Goodes Hall, Kingston", title: "Accounting and Finance Case Competition", description: "A real-life case competition: teams analyze the Memorial Centre Farmers Market and present their recommendations." },
 ];
