@@ -7,7 +7,8 @@
 //
 // Environment variables (Cloudflare Pages > Settings > Variables and secrets):
 //   TRANSACTIONS_CSV_URL  published CSV link of the Transactions tab (preferred)
-//   PERFORMANCE_CSV_URL   published CSV link of the Performance tab (portfolio worth over time)
+//   FUND_CSV_URL          published CSV link of the Fund tab (starting capital, deposits, earlier results)
+//   PERFORMANCE_CSV_URL   optional: published CSV link of the Performance tab (portfolio worth history for the graph)
 //   SHEET_CSV_URL         legacy Holdings tab link (still works if Transactions is not set)
 //   FINNHUB_KEY           Finnhub API key
 //   USDCAD_RATE           optional: fixed USD->CAD rate instead of the automatic one
@@ -277,6 +278,78 @@ export function computePerformance(rows) {
   };
 }
 
+
+// ---------- Fund tab (capital, income and results before the trade log starts) ----------
+
+// Fund tab columns: date, type, ticker, amount_cad, note.
+// Types: OPENING (starting balance), DEPOSIT, WITHDRAWAL (amount as a positive number),
+// INTEREST, DIVIDEND, OTHER (income, can be negative), REALIZED_PRIOR (profit/loss on a stock sold before the Transactions tab starts).
+export function rowsToFund(rows) {
+  if (!rows.length) return [];
+  const head = rows[0].map(normHeader);
+  const col = (r, name) => { const i = head.indexOf(name); return i >= 0 ? (r[i] || "").trim() : ""; };
+  const known = ["OPENING", "DEPOSIT", "WITHDRAWAL", "INTEREST", "DIVIDEND", "OTHER", "REALIZED_PRIOR"];
+  return rows.slice(1)
+    .map((r) => ({
+      date: parseDate(col(r, "date")),
+      type: col(r, "type").toUpperCase().replace(/[\s-]+/g, "_"),
+      ticker: col(r, "ticker").toUpperCase(),
+      amount: num(col(r, "amount_cad") || col(r, "amount")),
+      note: col(r, "note"),
+    }))
+    .filter((e) => known.includes(e.type) && isFinite(e.amount));
+}
+
+// Portfolio worth = capital put in + everything earned. Nothing is typed in by hand after setup:
+// realized results come from the Transactions tab, unrealized from live prices.
+export function computeFund(entries, holdings, sells, rateOf) {
+  const sum = (types) => entries.filter((e) => types.includes(e.type)).reduce((a, e) => a + e.amount, 0);
+  const opening = sum(["OPENING"]);
+  const deposits = sum(["DEPOSIT"]);
+  const withdrawals = Math.abs(sum(["WITHDRAWAL"]));
+  const contributed = opening + deposits - withdrawals;
+  const income = sum(["INTEREST", "DIVIDEND", "OTHER"]);
+
+  const priorEntries = entries.filter((e) => e.type === "REALIZED_PRIOR");
+  const priorDate = priorEntries.reduce((d, e) => (e.date > d ? e.date : d), "");
+  const realizedPrior = priorEntries.reduce((a, e) => a + e.amount, 0);
+  // Sells logged after the cutoff are added; earlier ones are already inside REALIZED_PRIOR (no double counting).
+  const realizedLogged = sells
+    .filter((s) => !priorDate || s.date > priorDate)
+    .reduce((a, s) => a + s.realized * rateOf(s.currency), 0);
+
+  let unrealized = 0, holdingsValue = 0, unpriced = [];
+  for (const h of holdings) {
+    if (h.price == null) { unpriced.push(h.ticker); continue; }
+    const r = rateOf(h.currency);
+    unrealized += (h.price - h.avg) * h.shares * r;
+    holdingsValue += h.price * h.shares * r;
+  }
+
+  const realized = realizedPrior + realizedLogged;
+  const gain = realized + unrealized + income;
+  const nav = contributed + gain;
+
+  const byTicker = {};
+  for (const e of priorEntries) byTicker[e.ticker || "Other"] = (byTicker[e.ticker || "Other"] || 0) + e.amount;
+  const prior = Object.entries(byTicker).map(([ticker, amount]) => ({ ticker, amount })).sort((a, b) => b.amount - a.amount);
+
+  return {
+    contributed, opening, deposits, withdrawals, income,
+    realized, realizedPrior, realizedLogged, unrealized, gain, nav,
+    returnOnCapital: contributed > 0 ? gain / contributed : null,
+    holdingsValue, leverage: nav > 0 ? holdingsValue / nav : null,
+    priorDate, prior, unpriced,
+  };
+}
+
+const SAMPLE_FUND = [
+  { date: "2025-09-15", type: "OPENING", ticker: "", amount: 7000, note: "" },
+  { date: "2026-01-12", type: "DEPOSIT", ticker: "", amount: 1500, note: "" },
+  { date: "2026-06-01", type: "DEPOSIT", ticker: "", amount: 1000, note: "" },
+  { date: "2026-11-01", type: "INTEREST", ticker: "", amount: -12.5, note: "" },
+];
+
 function demoPerformanceRows() {
   let s = 12345;
   const rand = () => { s |= 0; s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -314,15 +387,25 @@ export const SAMPLE_PRICES = { AAPL: 228.1, MSFT: 415.3, JPM: 211.4, JNJ: 152.6,
 
 export function demoResponse() {
   const p = buildPortfolio(SAMPLE_TRANSACTIONS);
+  const holdings = p.holdings.map((h) => ({ ...h, price: SAMPLE_PRICES[h.ticker] ?? null }));
+  const rateOf = (c) => (c === "USD" ? 1.4 : 1);
+  const fund = computeFund(SAMPLE_FUND, holdings, p.sells, rateOf);
+  // Make the demo history end exactly at the fund's worth so the chart and cards agree.
+  const hist = demoPerformanceRows();
+  const last = hist[hist.length - 1];
+  const k = fund.nav / last.nav;
+  hist.forEach((r, i) => { if (i) { r.nav = Math.round(r.nav * (1 + (k - 1) * i / (hist.length - 1)) * 100) / 100; } });
+  hist[hist.length - 1].nav = Math.round(fund.nav * 100) / 100;
   return {
     demo: true,
     updated: new Date().toISOString(),
     warnings: [],
     fx: { USD: 1.4, CAD: 1, source: "sample rate" },
-    holdings: p.holdings.map((h) => ({ ...h, price: SAMPLE_PRICES[h.ticker] ?? null })),
+    holdings,
     sells: p.sells,
     trades: tradesList(SAMPLE_TRANSACTIONS),
-    performance: computePerformance(demoPerformanceRows()),
+    performance: computePerformance(hist),
+    fund,
   };
 }
 
@@ -346,9 +429,10 @@ export async function onRequestGet(context) {
   if (hit) return hit;
 
   try {
-    const [sheetRes, perfRes] = await Promise.all([
+    const [sheetRes, perfRes, fundRes] = await Promise.all([
       fetch(sheetUrl),
       env.PERFORMANCE_CSV_URL ? fetch(env.PERFORMANCE_CSV_URL).catch(() => null) : Promise.resolve(null),
+      env.FUND_CSV_URL ? fetch(env.FUND_CSV_URL).catch(() => null) : Promise.resolve(null),
     ]);
     if (!sheetRes.ok) throw new Error("Could not read the Google Sheet (HTTP " + sheetRes.status + ")");
     const rows = parseCsv(await sheetRes.text());
@@ -379,15 +463,26 @@ export async function onRequestGet(context) {
     const unsupported = [...new Set(p.holdings.map((h) => h.currency))].filter((c) => c !== "USD" && c !== "CAD");
     if (unsupported.length) warnings.push("Unsupported currency: " + unsupported.join(", ") + " (use USD or CAD)");
 
+    const holdingsPriced = p.holdings.map((h) => ({ ...h, price: prices[h.ticker] ?? null }));
+    let fund = null;
+    if (env.FUND_CSV_URL) {
+      if (fundRes && fundRes.ok) {
+        const rateOf = (c) => (c === "USD" ? fx.rate : 1);
+        fund = computeFund(rowsToFund(parseCsv(await fundRes.text())), holdingsPriced, p.sells, rateOf);
+        if (fund.unpriced.length) warnings.push("Portfolio worth excludes holdings with no price: " + fund.unpriced.join(", "));
+      } else warnings.push("Could not read the Fund tab");
+    }
+
     const response = json({
       demo: false,
       updated: new Date().toISOString(),
       warnings,
       fx: { USD: fx.rate, CAD: 1, date: fx.date, source: fx.source },
-      holdings: p.holdings.map((h) => ({ ...h, price: prices[h.ticker] ?? null })),
+      holdings: holdingsPriced,
       sells: p.sells,
       trades: tradesList(parsed.transactions),
       performance,
+      fund,
     });
     context.waitUntil(cache.put(cacheKey, response.clone()));
     return response;

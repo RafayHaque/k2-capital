@@ -7,23 +7,37 @@ const state = { data: null, holdings: [], sells: [], perf: null, sector: "All", 
 // ---------- Fund performance ----------
 
 function renderPerf() {
-  const p = state.perf;
-  $("perf-empty").hidden = !!p;
-  $("perf-block").hidden = !p;
-  if (!p) {
+  const f = state.data.fund, p = state.perf;
+  if (f) {
+    setValue("p-worth", money(f.nav));
+    setText("p-worth-sub", "equity · holdings worth " + money0(f.holdingsValue));
+    setValue("p-gain", money(f.gain), cls(f.gain));
+    setText("p-gain-sub", `${money0(f.realized)} realized · ${money0(f.unrealized)} unrealized` + (f.income ? ` · ${money0(f.income)} interest` : ""));
+    setValue("p-since", f.returnOnCapital == null ? "–" : pct(f.returnOnCapital), cls(f.returnOnCapital));
+    setText("p-since-sub", "gain ÷ capital contributed");
+    setValue("p-ytd", money(f.contributed));
+    setText("p-ytd-sub", "deposits less withdrawals");
+  } else {
     ["p-worth", "p-gain", "p-since", "p-ytd"].forEach((id) => setValue(id, "–", ""));
-    setText("p-worth-sub", "Performance tab not connected");
-    return;
+    setText("p-worth-sub", "Fund tab not connected");
   }
-  setValue("p-worth", money(p.latest.nav));
-  setText("p-worth-sub", "as of " + fmtDate(p.latest.date) + (p.lastPeriod ? ` · ${pct(p.lastPeriod.pct)} last period` : ""));
-  setValue("p-gain", money(p.gain), cls(p.gain));
-  setText("p-gain-sub", "on " + money0(p.contributed) + " contributed");
-  setValue("p-since", pct(p.sinceInception), cls(p.sinceInception));
-  setValue("p-ytd", pct(p.ytd), cls(p.ytd));
-  setText("p-ytd-sub", new Date(p.latest.date + "T12:00:00").getFullYear() + " so far");
-  setText("perf-note", "Updated weekly from our brokerage statement. Dashed line shows money contributed to the fund.");
+  const ok = !!(p && p.points.length > 1);
+  $("perf-empty").hidden = ok;
+  $("perf-block").hidden = !ok;
+  if (!ok) return;
+  setText("perf-note", "Weekly snapshots of portfolio worth. Dashed line shows money contributed to the fund.");
   drawChart();
+}
+
+function renderEarlier() {
+  const f = state.data.fund;
+  $("earlier-block").hidden = !f || !f.prior.length;
+  if (!f || !f.prior.length) return;
+  const win = f.prior.filter((x) => x.amount > 0).length, lose = f.prior.filter((x) => x.amount < 0).length;
+  setValue("e-real", money(f.realizedPrior), cls(f.realizedPrior));
+  setText("e-real-sub", "through " + fmtDate(f.priorDate));
+  setValue("e-win", String(win)); setValue("e-lose", String(lose));
+  $("earlierRows").innerHTML = f.prior.map((x) => `<tr><td><span class="ticker">${esc(x.ticker)}</span></td><td class="${cls(x.amount)}">${money(x.amount)}</td></tr>`).join("");
 }
 
 function niceStep(raw) {
@@ -171,14 +185,14 @@ function renderHoldingsSummary() {
   setValue("s-gain", money(t.gain), cls(t.gain));
   setValue("s-roi", pct(t.roi), cls(t.roi));
 
-  const nav = state.perf ? state.perf.latest.nav : null;
+  const nav = state.data.fund ? state.data.fund.nav : null;
   if (nav && t.value) {
     const lev = t.value / nav;
     setValue("s-lev", lev.toFixed(2) + "x");
     setText("s-lev-sub", lev > 1 ? `about ${money0(t.value - nav)} borrowed` : `about ${Math.round((1 - lev) * 100)}% cash`);
   } else {
     setValue("s-lev", "–");
-    setText("s-lev-sub", "needs Performance tab");
+    setText("s-lev-sub", "needs Fund tab");
   }
 }
 
@@ -279,7 +293,7 @@ async function load() {
 
     $("fxnote").textContent = `Holdings are in CAD. 1 USD = ${data.rate("USD").toFixed(4)} CAD (${data.fx.source || "rate"}${data.fx.date ? ", " + data.fx.date : ""}).`;
     $("updated").textContent = data.demo ? "Sample prices." : "Prices last refreshed " + new Date(data.updated).toLocaleString("en-CA") + ". Quotes refresh about every 15 minutes and may be delayed.";
-    renderPerf(); renderWeekSelect(); renderHoldingsSummary(); renderAlloc(); renderChips(); renderRows(); renderSells();
+    renderPerf(); renderEarlier(); renderWeekSelect(); renderHoldingsSummary(); renderAlloc(); renderChips(); renderRows(); renderSells();
   } catch (e) {
     setStatus("Couldn't load the portfolio right now. Please try again shortly.", "error");
     console.error(e);

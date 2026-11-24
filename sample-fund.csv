@@ -1,0 +1,7 @@
+date,type,ticker,amount_cad,note
+2026-01-01,OPENING,,5000,Starting cash
+2026-01-01,DEPOSIT,,1500,Money added by members
+2026-02-01,WITHDRAWAL,,500,Money taken out (enter as a positive number)
+2026-11-01,INTEREST,,-12.50,Broker interest (negative if we paid)
+2026-11-20,REALIZED_PRIOR,HD,400,Profit on a stock sold before the Transactions tab starts
+2026-11-20,REALIZED_PRIOR,NKE,-120,Loss on a stock sold before the Transactions tab starts

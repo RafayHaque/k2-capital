@@ -69,12 +69,12 @@
       renderEventCards($("home-events"), upcomingEvents(3), "No events scheduled yet. Follow our Instagram for updates.");
       try {
         const d = await K2.load();
-        const p = d.performance;
+        const f = d.fund;
         const t = totals(d.holdings);
-        if (p) {
-          setValue("h1-v", money(p.latest.nav)); setText("h1-s", "as of " + K2.fmtDate(p.latest.date));
-          setValue("h2-v", pct(p.sinceInception), cls(p.sinceInception)); setText("h2-s", "time-weighted");
-          setValue("h3-v", pct(p.ytd), cls(p.ytd)); setText("h3-s", "so far this year");
+        if (f) {
+          setValue("h1-v", money(f.nav)); setText("h1-s", "equity · holdings worth " + money0(f.holdingsValue));
+          setText("h2-l", "Total gain / loss"); setValue("h2-v", money(f.gain), cls(f.gain)); setText("h2-s", "realized + unrealized");
+          setText("h3-l", "Return on capital"); setValue("h3-v", f.returnOnCapital == null ? "–" : pct(f.returnOnCapital), cls(f.returnOnCapital)); setText("h3-s", "on " + money0(f.contributed) + " contributed");
         } else {
           setText("h1-l", "Holdings market value"); setValue("h1-v", money(t.value));
           setText("h2-l", "Unrealized gain / loss"); setValue("h2-v", money(t.gain), cls(t.gain));
